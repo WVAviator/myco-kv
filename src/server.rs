@@ -3,12 +3,12 @@ use std::{
     net::{TcpListener, TcpStream},
 };
 
-const SERVER_ADDRESS: &str = "127.0.0.1:6922";
+pub fn start(port: u16) {
+    let addr = format!("localhost:{}", port);
 
-pub fn start() {
-    let listener = TcpListener::bind(&SERVER_ADDRESS).unwrap();
+    let listener = TcpListener::bind(&addr).unwrap();
 
-    println!("Server listening on {}", &SERVER_ADDRESS);
+    println!("Server listening on {}", &addr);
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
