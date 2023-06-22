@@ -5,7 +5,7 @@ mod repl;
 mod server;
 
 #[derive(Parser, Debug)]
-#[command(name = "MycaKV", version = "0.1.0", author = "WVAviator")]
+#[command(name = "MycoKV", version = "0.1.0", author = "WVAviator")]
 struct Args {
     #[arg(short, long, default_value = "6922")]
     port: Option<u16>,
