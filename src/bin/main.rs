@@ -1,4 +1,5 @@
 use clap::Parser;
+use myco_kv::kvmap::KVMap;
 use std::thread;
 
 mod repl;
@@ -16,7 +17,9 @@ fn main() {
 
     let port = args.port.unwrap();
 
-    let server_thread = thread::spawn(move || server::start(port));
+    let mut kvmap = KVMap::new();
+
+    let server_thread = thread::spawn(move || server::start(port, &mut kvmap));
     let repl_thread = thread::spawn(move || repl::start(port));
 
     server_thread.join().unwrap();

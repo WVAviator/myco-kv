@@ -3,9 +3,9 @@ use std::{
     net::{TcpListener, TcpStream},
 };
 
-use myco_kv::{operation::Operation, parser::parse_operation};
+use myco_kv::{kvmap::KVMap, parser::parse_operation};
 
-pub fn start(port: u16) {
+pub fn start(port: u16, kvmap: &mut KVMap) {
     let addr = format!("localhost:{}", port);
 
     let listener = TcpListener::bind(&addr).unwrap();
@@ -15,11 +15,11 @@ pub fn start(port: u16) {
     for stream in listener.incoming() {
         let stream = stream.unwrap();
 
-        handle_connection(stream);
+        handle_connection(stream, kvmap);
     }
 }
 
-fn handle_connection(mut stream: TcpStream) {
+fn handle_connection(mut stream: TcpStream, kvmap: &mut KVMap) {
     let mut buf_reader = BufReader::new(&mut stream);
 
     let mut request = String::new();
@@ -29,10 +29,14 @@ fn handle_connection(mut stream: TcpStream) {
     println!("Processed operation: {:?}", operation);
 
     let response = match operation {
-        Ok(Operation::Get(key)) => format!("Got key: {}", key),
-        Ok(Operation::Put(key, value)) => format!("Put key: {}, value: {}", key, value),
-        Ok(Operation::Delete(key)) => format!("Deleted key: {}", key),
-        Err(e) => format!("Error: {}", e.message()),
+        Ok(operation) => {
+            let result = kvmap.process_operation(operation);
+            match result {
+                Ok(result) => result,
+                Err(e) => e.message(),
+            }
+        }
+        Err(e) => e.message(),
     };
 
     stream.write_all(response.as_bytes()).unwrap();
