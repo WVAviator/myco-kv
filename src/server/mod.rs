@@ -3,6 +3,9 @@ use std::{
     net::{TcpListener, TcpStream},
 };
 
+use crate::lib::operation::Operation;
+use crate::lib::parser::parse_operation;
+
 pub fn start(port: u16) {
     let addr = format!("localhost:{}", port);
 
@@ -23,7 +26,15 @@ fn handle_connection(mut stream: TcpStream) {
     let mut request = String::new();
     buf_reader.read_line(&mut request).unwrap();
 
-    let response = format!("Confirmed: {}", request);
+    let operation = parse_operation(&request);
+    println!("Processed operation: {:?}", operation);
+
+    let response = match operation {
+        Ok(Operation::Get(key)) => format!("Got key: {}", key),
+        Ok(Operation::Put(key, value)) => format!("Put key: {}, value: {}", key, value),
+        Ok(Operation::Delete(key)) => format!("Deleted key: {}", key),
+        Err(e) => format!("Error: {}", e.message()),
+    };
 
     stream.write_all(response.as_bytes()).unwrap();
 }
