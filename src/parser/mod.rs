@@ -15,6 +15,9 @@ pub fn parse_operation(command: &str) -> Result<Operation, ParseError> {
             let key = parts.next().ok_or(ParseError::MissingKey)?;
 
             let value = parts.collect::<Vec<&str>>().join(" ");
+            if value.is_empty() {
+                return Err(ParseError::MissingValue);
+            }
             if value.chars().next() != Some('"') || value.chars().last() != Some('"') {
                 return Err(ParseError::InvalidValue(value));
             }
@@ -27,5 +30,86 @@ pub fn parse_operation(command: &str) -> Result<Operation, ParseError> {
             Ok(Operation::Delete(key.to_string()))
         }
         _ => Err(ParseError::InvalidCommand(command.to_string())),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_get_operation() {
+        let test_statement = "GET key";
+        let operation = parse_operation(test_statement).unwrap();
+
+        assert_eq!(operation, Operation::Get("key".to_string()));
+    }
+
+    #[test]
+    fn parse_put_operation() {
+        let test_statement = "PUT key \"value\"";
+        let operation = parse_operation(test_statement).unwrap();
+
+        assert_eq!(
+            operation,
+            Operation::Put("key".to_string(), "value".to_string())
+        );
+    }
+
+    #[test]
+    fn parse_put_long_value() {
+        let test_statement = "PUT key \"long value with many spaces\"";
+        let operation = parse_operation(test_statement).unwrap();
+
+        assert_eq!(
+            operation,
+            Operation::Put("key".to_string(), "long value with many spaces".to_string())
+        );
+    }
+
+    #[test]
+    fn parse_delete_operation() {
+        let test_statement = "DELETE key";
+        let operation = parse_operation(test_statement).unwrap();
+
+        assert_eq!(operation, Operation::Delete("key".to_string()));
+    }
+
+    #[test]
+    fn parse_invalid_operation() {
+        let test_statement = "INVALID key";
+        let operation = parse_operation(test_statement);
+
+        assert_eq!(
+            operation,
+            Err(ParseError::InvalidCommand("INVALID key".to_string()))
+        );
+    }
+
+    #[test]
+    fn parse_missing_key() {
+        let test_statement = "PUT";
+        let operation = parse_operation(test_statement);
+
+        assert_eq!(operation, Err(ParseError::MissingKey));
+    }
+
+    #[test]
+    fn parse_missing_value() {
+        let test_statement = "PUT key";
+        let operation = parse_operation(test_statement);
+
+        assert_eq!(operation, Err(ParseError::MissingValue));
+    }
+
+    #[test]
+    fn parse_invalid_value() {
+        let test_statement = "PUT key value";
+        let operation = parse_operation(test_statement);
+
+        assert_eq!(
+            operation,
+            Err(ParseError::InvalidValue("value".to_string()))
+        );
     }
 }
