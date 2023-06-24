@@ -14,10 +14,10 @@ pub fn start(port: u16) {
 
         match send::send_request(&addr, &buffer) {
             Ok(response) => {
-                println!("Received: {}", response);
+                println!("{}", response);
             }
             Err(e) => {
-                eprintln!("Error: {}", e);
+                eprintln!("ERR: {}", e);
             }
         }
     }
