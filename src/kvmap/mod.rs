@@ -33,15 +33,15 @@ impl KVMap {
             Operation::Get(key) => self
                 .get(&key)
                 .ok_or(MapError::KeyNotFound(key))
-                .map(|value| value.to_string()),
+                .map(|value| format!("\"{}\"", value).to_string()),
             Operation::Put(key, value) => {
                 self.put(key, value);
-                Ok("".to_string())
+                Ok("OK".to_string())
             }
             Operation::Delete(key) => self
                 .delete(&key)
                 .ok_or(MapError::KeyNotFound(key))
-                .map(|value| value.to_string()),
+                .map(|value| format!("\"{}\"", value).to_string()),
         }
     }
 }

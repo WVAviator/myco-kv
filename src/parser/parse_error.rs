@@ -4,6 +4,7 @@ pub enum ParseError {
     InvalidCommand(String),
     MissingKey,
     MissingValue,
+    InvalidValue(String),
 }
 
 impl ParseError {
@@ -12,6 +13,7 @@ impl ParseError {
             ParseError::InvalidCommand(command) => format!("Invalid command: {}", command),
             ParseError::MissingKey => String::from("Missing key"),
             ParseError::MissingValue => String::from("Missing value"),
+            ParseError::InvalidValue(value) => format!("Invalid value: {}", value),
         }
     }
 }

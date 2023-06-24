@@ -13,7 +13,13 @@ pub fn parse_operation(command: &str) -> Result<Operation, ParseError> {
         }
         Some("PUT") => {
             let key = parts.next().ok_or(ParseError::MissingKey)?;
-            let value = parts.next().ok_or(ParseError::MissingValue)?;
+
+            let value = parts.collect::<Vec<&str>>().join(" ");
+            if value.chars().next() != Some('"') || value.chars().last() != Some('"') {
+                return Err(ParseError::InvalidValue(value));
+            }
+            let value = value.trim_matches('"');
+
             Ok(Operation::Put(key.to_string(), value.to_string()))
         }
         Some("DELETE") => {
