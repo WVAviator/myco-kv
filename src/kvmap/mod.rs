@@ -45,3 +45,88 @@ impl KVMap {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    #[test]
+    fn test_get() {
+        let mut map = super::KVMap::new();
+        map.put("key".to_string(), "value".to_string());
+
+        assert_eq!(map.get("key"), Some(&"value".to_string()));
+    }
+
+    #[test]
+    fn test_put() {
+        let mut map = super::KVMap::new();
+        map.put("key".to_string(), "value".to_string());
+
+        assert_eq!(map.get("key"), Some(&"value".to_string()));
+    }
+
+    #[test]
+    fn test_delete() {
+        let mut map = super::KVMap::new();
+        map.put("key".to_string(), "value".to_string());
+
+        assert_eq!(map.delete("key"), Some("value".to_string()));
+        assert_eq!(map.get("key"), None);
+    }
+
+    #[test]
+    fn test_process_operation_get() {
+        let mut map = super::KVMap::new();
+        map.put("key".to_string(), "value".to_string());
+
+        let operation = super::Operation::Get("key".to_string());
+        assert_eq!(
+            map.process_operation(operation),
+            Ok("\"value\"".to_string())
+        );
+    }
+
+    #[test]
+    fn test_process_operation_put() {
+        let mut map = super::KVMap::new();
+
+        let operation = super::Operation::Put("key".to_string(), "value".to_string());
+        assert_eq!(map.process_operation(operation), Ok("OK".to_string()));
+        assert_eq!(map.get("key"), Some(&"value".to_string()));
+    }
+
+    #[test]
+    fn test_process_operation_delete() {
+        let mut map = super::KVMap::new();
+        map.put("key".to_string(), "value".to_string());
+
+        let operation = super::Operation::Delete("key".to_string());
+        assert_eq!(
+            map.process_operation(operation),
+            Ok("\"value\"".to_string())
+        );
+        assert_eq!(map.get("key"), None);
+    }
+
+    #[test]
+    fn test_process_operation_get_key_not_found() {
+        let mut map = super::KVMap::new();
+
+        let operation = super::Operation::Get("key".to_string());
+        assert_eq!(
+            map.process_operation(operation),
+            Err(super::MapError::KeyNotFound("key".to_string()))
+        );
+    }
+
+    #[test]
+    fn test_process_operation_delete_key_not_found() {
+        let mut map = super::KVMap::new();
+
+        let operation = super::Operation::Delete("key".to_string());
+        assert_eq!(
+            map.process_operation(operation),
+            Err(super::MapError::KeyNotFound("key".to_string()))
+        );
+    }
+}
