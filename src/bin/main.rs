@@ -1,7 +1,6 @@
 use clap::Parser;
 use std::thread;
 
-mod lib;
 mod repl;
 mod server;
 

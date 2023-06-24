@@ -1,6 +1,5 @@
 use std::io::{BufRead, BufReader};
 
-use crate::repl::send::send_request;
 mod send;
 
 pub fn start(port: u16) {
@@ -13,7 +12,7 @@ pub fn start(port: u16) {
         let mut buffer = String::new();
         reader.read_line(&mut buffer).unwrap();
 
-        match send_request(&addr, &buffer) {
+        match send::send_request(&addr, &buffer) {
             Ok(response) => {
                 println!("Received: {}", response);
             }

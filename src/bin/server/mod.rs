@@ -3,8 +3,7 @@ use std::{
     net::{TcpListener, TcpStream},
 };
 
-use crate::lib::operation::Operation;
-use crate::lib::parser::parse_operation;
+use myco_kv::{operation::Operation, parser::parse_operation};
 
 pub fn start(port: u16) {
     let addr = format!("localhost:{}", port);

@@ -1,7 +1,5 @@
-// This parses MycoKV statements and returns the appropriate Operation enum variant.
-
-use crate::lib::operation::Operation;
-use crate::lib::parser::parse_error::ParseError;
+use crate::operation::Operation;
+use crate::parser::parse_error::ParseError;
 
 pub mod parse_error;
 
