@@ -28,6 +28,27 @@ impl KVMap {
         self.map.remove(key)
     }
 
+    /// Process an operation and return a result.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use myco_kv::kvmap::KVMap;
+    /// use myco_kv::operation::Operation;
+    ///
+    /// let mut map = KVMap::new();
+    /// map.put("key".to_string(), "value".to_string());
+    ///
+    /// let operation = Operation::Get("key".to_string());
+    /// let result = map.process_operation(operation);
+    ///
+    /// assert_eq!(result, Ok("value".to_string()));
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns a `MapError` if the key does not exist in the map.
+    ///
     pub fn process_operation(&mut self, operation: Operation) -> Result<String, MapError> {
         match operation {
             Operation::Get(key) => self

@@ -3,6 +3,22 @@ use crate::parser::parse_error::ParseError;
 
 pub mod parse_error;
 
+/// Parses a command into an `Operation`.
+///
+/// # Examples
+///
+/// ```
+/// use myco_kv::parser::parse_operation;
+/// use myco_kv::operation::Operation;
+///
+/// assert_eq!(parse_operation("GET key"), Ok(Operation::Get("key".to_string())));
+/// assert_eq!(parse_operation("PUT key \"value\""), Ok(Operation::Put("key".to_string(), "value".to_string())));
+/// ```
+///
+/// # Errors
+///
+/// Returns a `ParseError` if the command is invalid.
+///
 pub fn parse_operation(command: &str) -> Result<Operation, ParseError> {
     let mut parts = command.split_whitespace();
 
