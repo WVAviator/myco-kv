@@ -1,5 +1,7 @@
+use serde::Serialize;
 use std::collections::HashMap;
 
+#[derive(Serialize)]
 pub struct RadixNode {
     pub children: HashMap<String, RadixNode>,
     pub key: String,
