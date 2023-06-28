@@ -42,7 +42,7 @@ impl KVMap {
     /// let operation = Operation::Get("key".to_string());
     /// let result = map.process_operation(operation);
     ///
-    /// assert_eq!(result, Ok("value".to_string()));
+    /// assert_eq!(result, Ok("\"value\"".to_string()));
     /// ```
     ///
     /// # Errors
