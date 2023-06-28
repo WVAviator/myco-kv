@@ -1,20 +1,5 @@
-use std::collections::HashMap;
-
-struct RadixNode {
-    children: HashMap<String, RadixNode>,
-    key: String,
-    value: Option<String>,
-}
-
-impl RadixNode {
-    pub fn new(key: String) -> Self {
-        RadixNode {
-            children: HashMap::new(),
-            key,
-            value: None,
-        }
-    }
-}
+mod radixnode;
+use self::radixnode::RadixNode;
 
 struct RadixTree {
     root: RadixNode,
