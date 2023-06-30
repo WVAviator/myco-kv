@@ -1,3 +1,4 @@
+pub mod eventbroker;
 pub mod kvmap;
 pub mod macros;
 pub mod operation;
