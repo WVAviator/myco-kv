@@ -25,12 +25,18 @@ impl KVMap {
 
         match result {
             Ok(value) => {
+                if value.is_empty() {
+                    return Err(MapError::EmptyValue(key.to_string()));
+                }
+
                 let json = serde_json::to_string(&value).unwrap();
 
                 let event = Event::Get {
                     key: key.to_string(),
                     result: json.to_string(),
                 };
+                self.event_broker.publish(&event);
+
                 Ok(json)
             }
             Err(_) => Err(MapError::KeyNotFound(key.to_string())),
@@ -73,9 +79,11 @@ impl KVMap {
     ///
     /// ```
     /// use myco_kv::kvmap::KVMap;
+    /// use myco_kv::eventbroker::EventBroker;
     /// use myco_kv::operation::Operation;
     ///
-    /// let mut map = KVMap::new();
+    /// let event_broker = EventBroker::new();
+    /// let mut map = KVMap::new(event_broker);
     /// map.put("key".to_string(), "value".to_string());
     ///
     /// let operation = Operation::Get("key".to_string());
@@ -109,7 +117,7 @@ mod test {
     #[test]
     fn test_put_and_get() {
         let mut map = super::KVMap::new(EventBroker::new());
-        map.put("key".to_string(), "value".to_string());
+        map.put("key".to_string(), "value".to_string()).unwrap();
 
         let expected = r#"{"key":"value"}"#.to_string();
 
@@ -119,19 +127,16 @@ mod test {
     #[test]
     fn test_delete() {
         let mut map = super::KVMap::new(EventBroker::new());
-        map.put("key".to_string(), "value".to_string());
+        map.put("key".to_string(), "value".to_string()).unwrap();
 
         assert_eq!(map.delete("key"), Ok("value".to_string()));
-        assert_eq!(
-            map.get("key"),
-            Err(MapError::KeyNotFound("key".to_string()))
-        );
+        assert_eq!(map.get("key"), Err(MapError::EmptyValue("key".to_string())));
     }
 
     #[test]
     fn test_process_operation_get() {
         let mut map = super::KVMap::new(EventBroker::new());
-        map.put("key".to_string(), "value".to_string());
+        map.put("key".to_string(), "value".to_string()).unwrap();
 
         let operation = super::Operation::Get("key".to_string());
 
@@ -158,14 +163,8 @@ mod test {
         map.put("key".to_string(), "value".to_string()).unwrap();
 
         let operation = super::Operation::Delete("key".to_string());
-        assert_eq!(
-            map.process_operation(operation),
-            Ok("\"value\"".to_string())
-        );
-        assert_eq!(
-            map.get("key"),
-            Err(MapError::KeyNotFound("key".to_string()))
-        );
+        assert_eq!(map.process_operation(operation), Ok("value".to_string()));
+        assert_eq!(map.get("key"), Err(MapError::EmptyValue("key".to_string())));
     }
 
     #[test]

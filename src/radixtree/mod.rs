@@ -137,7 +137,7 @@ mod test {
     #[test]
     fn puts_and_gets_single_value() {
         let mut radix = RadixTree::new();
-        radix.put("key".to_string(), "value".to_string());
+        radix.put("key".to_string(), "value".to_string()).unwrap();
 
         let expected = HashMap::from([("key".to_string(), "value".to_string())]);
         assert_eq!(radix.get("key").unwrap(), expected);
@@ -146,7 +146,9 @@ mod test {
     #[test]
     fn puts_and_gets_nested_single_value() {
         let mut radix = RadixTree::new();
-        radix.put("key.abc.def".to_string(), "value".to_string());
+        radix
+            .put("key.abc.def".to_string(), "value".to_string())
+            .unwrap();
 
         let expected = HashMap::from_iter([("key.abc.def".to_string(), "value".to_string())]);
 
@@ -156,9 +158,15 @@ mod test {
     #[test]
     fn puts_and_gets_multiple_values() {
         let mut radix = RadixTree::new();
-        radix.put("key.a".to_string(), "value1".to_string());
-        radix.put("key.b".to_string(), "value2".to_string());
-        radix.put("key.c".to_string(), "value3".to_string());
+        radix
+            .put("key.a".to_string(), "value1".to_string())
+            .unwrap();
+        radix
+            .put("key.b".to_string(), "value2".to_string())
+            .unwrap();
+        radix
+            .put("key.c".to_string(), "value3".to_string())
+            .unwrap();
 
         let expected = HashMap::from([
             ("key.a".to_string(), "value1".to_string()),
@@ -174,9 +182,15 @@ mod test {
     #[test]
     fn puts_and_gets_nested_subtree() {
         let mut radix = RadixTree::new();
-        radix.put("key.a".to_string(), "value1".to_string());
-        radix.put("key.b".to_string(), "value2".to_string());
-        radix.put("key.b.a".to_string(), "value3".to_string());
+        radix
+            .put("key.a".to_string(), "value1".to_string())
+            .unwrap();
+        radix
+            .put("key.b".to_string(), "value2".to_string())
+            .unwrap();
+        radix
+            .put("key.b.a".to_string(), "value3".to_string())
+            .unwrap();
 
         let expected = HashMap::from([
             ("key.a".to_string(), "value1".to_string()),
@@ -192,9 +206,15 @@ mod test {
     #[test]
     fn puts_and_gets_partial_subtree() {
         let mut radix = RadixTree::new();
-        radix.put("key.a".to_string(), "value1".to_string());
-        radix.put("key.b".to_string(), "value2".to_string());
-        radix.put("key.b.a".to_string(), "value3".to_string());
+        radix
+            .put("key.a".to_string(), "value1".to_string())
+            .unwrap();
+        radix
+            .put("key.b".to_string(), "value2".to_string())
+            .unwrap();
+        radix
+            .put("key.b.a".to_string(), "value3".to_string())
+            .unwrap();
 
         let expected = HashMap::from([
             ("key.a".to_string(), "value1".to_string()),
