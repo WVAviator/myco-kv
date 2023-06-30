@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use crate::eventbroker::event::Event;
 use crate::eventbroker::EventBroker;
 use crate::operation::Operation;
@@ -9,18 +11,18 @@ mod map_error;
 
 pub struct KVMap {
     pub radix_tree: RadixTree,
-    event_broker: EventBroker,
+    event_broker: Arc<Mutex<EventBroker>>,
 }
 
 impl KVMap {
-    pub fn new(event_broker: EventBroker) -> Self {
+    pub fn new(event_broker: Arc<Mutex<EventBroker>>) -> Self {
         KVMap {
             radix_tree: RadixTree::new(),
             event_broker,
         }
     }
 
-    pub fn get(&self, key: &str) -> Result<String, MapError> {
+    pub fn get(&mut self, key: &str) -> Result<String, MapError> {
         let result = self.radix_tree.get(key);
 
         match result {
@@ -35,7 +37,7 @@ impl KVMap {
                     key: key.to_string(),
                     result: json.to_string(),
                 };
-                self.event_broker.publish(&event);
+                self.event_broker.lock().unwrap().publish(&event);
 
                 Ok(json)
             }
@@ -51,7 +53,7 @@ impl KVMap {
                     key: key.to_string(),
                     value: value.to_string(),
                 };
-                self.event_broker.publish(&event);
+                self.event_broker.lock().unwrap().publish(&event);
                 Ok(())
             }
             Err(_) => Err(MapError::InvalidKey(key)),
@@ -66,7 +68,7 @@ impl KVMap {
                 let event = Event::Delete {
                     key: key.to_string(),
                 };
-                self.event_broker.publish(&event);
+                self.event_broker.lock().unwrap().publish(&event);
                 Ok(value)
             }
             Err(_) => Err(MapError::KeyNotFound(key.to_string())),
@@ -81,9 +83,10 @@ impl KVMap {
     /// use myco_kv::kvmap::KVMap;
     /// use myco_kv::eventbroker::EventBroker;
     /// use myco_kv::operation::Operation;
+    /// use std::sync::{Arc, Mutex};
     ///
-    /// let event_broker = EventBroker::new();
-    /// let mut map = KVMap::new(event_broker);
+    /// let event_broker = Arc::new(Mutex::new(EventBroker::new()));
+    /// let mut map = KVMap::new(event_broker.clone());
     /// map.put("key".to_string(), "value".to_string());
     ///
     /// let operation = Operation::Get("key".to_string());
@@ -116,7 +119,8 @@ mod test {
 
     #[test]
     fn test_put_and_get() {
-        let mut map = super::KVMap::new(EventBroker::new());
+        let event_broker_mutex = Arc::new(Mutex::new(EventBroker::new()));
+        let mut map = super::KVMap::new(event_broker_mutex.clone());
         map.put("key".to_string(), "value".to_string()).unwrap();
 
         let expected = r#"{"key":"value"}"#.to_string();
@@ -126,7 +130,8 @@ mod test {
 
     #[test]
     fn test_delete() {
-        let mut map = super::KVMap::new(EventBroker::new());
+        let event_broker_mutex = Arc::new(Mutex::new(EventBroker::new()));
+        let mut map = super::KVMap::new(event_broker_mutex.clone());
         map.put("key".to_string(), "value".to_string()).unwrap();
 
         assert_eq!(map.delete("key"), Ok("value".to_string()));
@@ -135,7 +140,8 @@ mod test {
 
     #[test]
     fn test_process_operation_get() {
-        let mut map = super::KVMap::new(EventBroker::new());
+        let event_broker_mutex = Arc::new(Mutex::new(EventBroker::new()));
+        let mut map = super::KVMap::new(event_broker_mutex.clone());
         map.put("key".to_string(), "value".to_string()).unwrap();
 
         let operation = super::Operation::Get("key".to_string());
@@ -147,7 +153,8 @@ mod test {
 
     #[test]
     fn test_process_operation_put() {
-        let mut map = super::KVMap::new(EventBroker::new());
+        let event_broker_mutex = Arc::new(Mutex::new(EventBroker::new()));
+        let mut map = super::KVMap::new(event_broker_mutex.clone());
 
         let operation = super::Operation::Put("key".to_string(), "value".to_string());
         assert_eq!(map.process_operation(operation), Ok("OK".to_string()));
@@ -159,7 +166,8 @@ mod test {
 
     #[test]
     fn test_process_operation_delete() {
-        let mut map = super::KVMap::new(EventBroker::new());
+        let event_broker_mutex = Arc::new(Mutex::new(EventBroker::new()));
+        let mut map = super::KVMap::new(event_broker_mutex.clone());
         map.put("key".to_string(), "value".to_string()).unwrap();
 
         let operation = super::Operation::Delete("key".to_string());
@@ -169,7 +177,8 @@ mod test {
 
     #[test]
     fn test_process_operation_get_key_not_found() {
-        let mut map = super::KVMap::new(EventBroker::new());
+        let event_broker_mutex = Arc::new(Mutex::new(EventBroker::new()));
+        let mut map = super::KVMap::new(event_broker_mutex.clone());
 
         let operation = super::Operation::Get("key".to_string());
         assert_eq!(
@@ -180,7 +189,8 @@ mod test {
 
     #[test]
     fn test_process_operation_delete_key_not_found() {
-        let mut map = super::KVMap::new(EventBroker::new());
+        let event_broker_mutex = Arc::new(Mutex::new(EventBroker::new()));
+        let mut map = super::KVMap::new(event_broker_mutex.clone());
 
         let operation = super::Operation::Delete("key".to_string());
         assert_eq!(
@@ -191,7 +201,8 @@ mod test {
 
     #[test]
     fn test_process_operation_get_multiple() {
-        let mut map = super::KVMap::new(EventBroker::new());
+        let event_broker_mutex = Arc::new(Mutex::new(EventBroker::new()));
+        let mut map = super::KVMap::new(event_broker_mutex.clone());
 
         map.put("key.abc".to_string(), "value1".to_string())
             .unwrap();

@@ -18,8 +18,8 @@ impl EventBroker {
         self.subscribers.push(subscriber);
     }
 
-    pub fn publish(&self, event: &Event) {
-        for subscriber in &self.subscribers {
+    pub fn publish(&mut self, event: &Event) {
+        for subscriber in &mut self.subscribers {
             subscriber.notify(event);
         }
     }
