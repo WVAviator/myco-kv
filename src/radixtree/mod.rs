@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-
-use self::{accesstype::AccessType, radixnode::RadixNode};
-
 mod accesstype;
+mod radixerror;
 mod radixnode;
+
+use self::{accesstype::AccessType, radixerror::RadixError, radixnode::RadixNode};
+use std::collections::HashMap;
 
 pub struct RadixTree {
     root: RadixNode,
@@ -16,7 +16,7 @@ impl RadixTree {
         }
     }
 
-    pub fn get(&self, key: &str) -> HashMap<String, String> {
+    pub fn get(&self, key: &str) -> Result<HashMap<String, String>, RadixError> {
         let access_type = AccessType::parse(key);
         let mut results: HashMap<String, String> = HashMap::new();
 
@@ -28,14 +28,14 @@ impl RadixTree {
                     let child = current.children.get(part);
                     match child {
                         Some(child) => current = child,
-                        None => return HashMap::new(),
+                        None => return Err(RadixError::KeyNotFound(key.to_string())),
                     }
                 }
 
                 if let Some(value) = &current.value {
                     results.insert(key.to_string(), value.to_string());
                 }
-                results
+                Ok(results)
             }
             AccessType::FullSubtree(key) => {
                 let mut current = &self.root;
@@ -44,7 +44,7 @@ impl RadixTree {
                     let child = current.children.get(part);
                     match child {
                         Some(child) => current = child,
-                        None => return HashMap::new(),
+                        None => return Err(RadixError::KeyNotFound(key.to_string())),
                     }
                 }
                 let mut queue = Vec::new();
@@ -59,7 +59,7 @@ impl RadixTree {
                         queue.push(child);
                     }
                 }
-                results
+                Ok(results)
             }
             AccessType::PartialSubtree(key, depth) => {
                 let mut current = &self.root;
@@ -68,7 +68,7 @@ impl RadixTree {
                     let child = current.children.get(part);
                     match child {
                         Some(child) => current = child,
-                        None => return HashMap::new(),
+                        None => return Err(RadixError::KeyNotFound(key.to_string())),
                     }
                 }
                 let mut queue = Vec::new();
@@ -86,15 +86,19 @@ impl RadixTree {
                         queue.push((child, current_depth + 1));
                     }
                 }
-                results
+                Ok(results)
             }
         }
     }
 
-    pub fn put(&mut self, key: String, value: String) {
+    pub fn put(&mut self, key: String, value: String) -> Result<(), RadixError> {
         let mut current = &mut self.root;
         let parts: Vec<&str> = key.split(".").collect();
         for (i, part) in parts.iter().enumerate() {
+            if part.starts_with("*") {
+                return Err(RadixError::InvalidKey(key));
+            }
+
             if current.children.contains_key(*part) {
                 current = current.children.get_mut(*part).unwrap();
             } else {
@@ -104,23 +108,25 @@ impl RadixTree {
             }
         }
         current.value = Some(value);
+
+        Ok(())
     }
 
-    pub fn delete(&mut self, key: String) -> Option<String> {
+    pub fn delete(&mut self, key: String) -> Result<String, RadixError> {
         let mut current = &mut self.root;
         let parts = key.split(".");
         for part in parts {
             if current.children.contains_key(part) {
                 current = current.children.get_mut(part).unwrap();
             } else {
-                return None;
+                return Err(RadixError::KeyNotFound(key.to_string()));
             }
         }
 
         let value = current.value.clone().unwrap();
         current.value = None;
 
-        Some(value)
+        Ok(value)
     }
 }
 
@@ -134,7 +140,7 @@ mod test {
         radix.put("key".to_string(), "value".to_string());
 
         let expected = HashMap::from([("key".to_string(), "value".to_string())]);
-        assert_eq!(radix.get("key"), expected);
+        assert_eq!(radix.get("key").unwrap(), expected);
     }
 
     #[test]
@@ -144,7 +150,7 @@ mod test {
 
         let expected = HashMap::from_iter([("key.abc.def".to_string(), "value".to_string())]);
 
-        assert_eq!(radix.get("key.abc.def"), expected);
+        assert_eq!(radix.get("key.abc.def").unwrap(), expected);
     }
 
     #[test]
@@ -160,7 +166,7 @@ mod test {
             ("key.c".to_string(), "value3".to_string()),
         ]);
 
-        let actual = radix.get("key.*");
+        let actual = radix.get("key.*").unwrap();
 
         assert_eq!(actual, expected);
     }
@@ -178,7 +184,7 @@ mod test {
             ("key.b.a".to_string(), "value3".to_string()),
         ]);
 
-        let actual = radix.get("key.*");
+        let actual = radix.get("key.*").unwrap();
 
         assert_eq!(actual, expected);
     }
@@ -195,7 +201,7 @@ mod test {
             ("key.b".to_string(), "value2".to_string()),
         ]);
 
-        let actual = radix.get("key.*1");
+        let actual = radix.get("key.*1").unwrap();
 
         assert_eq!(actual, expected);
     }

@@ -1,11 +1,12 @@
 use std::{
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
+    sync::{Arc, Mutex},
 };
 
 use myco_kv::{kvmap::KVMap, parser::parse_operation};
 
-pub fn start(port: u16, kvmap: &mut KVMap) {
+pub fn start(port: u16, kvmap: Arc<Mutex<KVMap>>) {
     let addr = format!("localhost:{}", port);
 
     let listener = TcpListener::bind(&addr).unwrap();
@@ -15,11 +16,11 @@ pub fn start(port: u16, kvmap: &mut KVMap) {
     for stream in listener.incoming() {
         let stream = stream.unwrap();
 
-        handle_connection(stream, kvmap);
+        handle_connection(stream, &kvmap);
     }
 }
 
-fn handle_connection(mut stream: TcpStream, kvmap: &mut KVMap) {
+fn handle_connection(mut stream: TcpStream, kvmap: &Arc<Mutex<KVMap>>) {
     let mut buf_reader = BufReader::new(&mut stream);
 
     let mut request = String::new();
@@ -30,6 +31,7 @@ fn handle_connection(mut stream: TcpStream, kvmap: &mut KVMap) {
 
     let response = match operation {
         Ok(operation) => {
+            let mut kvmap = kvmap.lock().unwrap();
             let result = kvmap.process_operation(operation);
             match result {
                 Ok(result) => result,
