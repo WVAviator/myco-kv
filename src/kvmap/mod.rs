@@ -116,6 +116,8 @@ mod test {
     use super::*;
     use crate::eventbroker::EventBroker;
     use serde_json::map;
+    use crate::eventbroker::subscriber::MockSubscriber;
+    use mockall::predicate::*;
 
     #[test]
     fn test_put_and_get() {
@@ -221,4 +223,22 @@ mod test {
 
         assert_eq!(expected_map, actual_map);
     }
+
+    #[test]
+    fn test_put_should_trigger_event() {
+        let mut mock_subscriber = MockSubscriber::new();
+        mock_subscriber.expect_notify().times(3).return_const(());
+
+        let mut event_broker = EventBroker::new();
+        event_broker.subscribe(Box::new(mock_subscriber));
+
+        let event_broker_mutex = Arc::new(Mutex::new(event_broker));
+        let mut map = super::KVMap::new(event_broker_mutex.clone());
+
+        map.put("key.abc".to_string(), "value1".to_string()).unwrap();
+        map.get("key.abc").unwrap();
+        map.delete("key.abc").unwrap();
+        map.delete("key.abc").unwrap();
+    }
+         
 }

@@ -31,7 +31,6 @@ mod test {
     use super::subscriber::MockSubscriber;
     use super::*;
     use mockall::predicate::*;
-    use mockall::*;
 
     #[test]
     fn test_can_subscribe_and_be_notified() {
