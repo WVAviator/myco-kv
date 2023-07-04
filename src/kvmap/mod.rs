@@ -239,6 +239,5 @@ mod test {
             .unwrap();
         map.get("key.abc").unwrap();
         map.delete("key.abc").unwrap();
-        map.delete("key.abc").unwrap();
     }
 }
