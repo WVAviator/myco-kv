@@ -114,10 +114,10 @@ impl KVMap {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::eventbroker::EventBroker;
-    use serde_json::map;
     use crate::eventbroker::subscriber::MockSubscriber;
+    use crate::eventbroker::EventBroker;
     use mockall::predicate::*;
+    use serde_json::map;
 
     #[test]
     fn test_put_and_get() {
@@ -235,10 +235,9 @@ mod test {
         let event_broker_mutex = Arc::new(Mutex::new(event_broker));
         let mut map = super::KVMap::new(event_broker_mutex.clone());
 
-        map.put("key.abc".to_string(), "value1".to_string()).unwrap();
+        map.put("key.abc".to_string(), "value1".to_string())
+            .unwrap();
         map.get("key.abc").unwrap();
         map.delete("key.abc").unwrap();
-        map.delete("key.abc").unwrap();
     }
-         
 }
