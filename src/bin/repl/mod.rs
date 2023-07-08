@@ -1,4 +1,7 @@
-use std::io::{BufRead, BufReader};
+use std::{
+    io::{BufRead, BufReader},
+    net::TcpStream,
+};
 
 mod send;
 
@@ -7,17 +10,21 @@ pub fn start(port: u16) {
     let mut reader = BufReader::new(stdin);
 
     let addr = format!("localhost:{}", port);
+    let mut stream = TcpStream::connect(&addr).unwrap();
 
     loop {
         let mut buffer = String::new();
-        reader.read_line(&mut buffer).unwrap();
+        if let Err(_) = reader.read_line(&mut buffer) {
+            println!("Unable to read input, please try again.");
+            continue;
+        }
 
-        match send::send_request(&addr, &buffer) {
+        match send::send_request(&mut stream, &buffer) {
             Ok(response) => {
                 println!("{}", response);
             }
             Err(e) => {
-                eprintln!("ERR: {}", e);
+                eprintln!("Error occurred communicating with server: {}", e);
             }
         }
     }

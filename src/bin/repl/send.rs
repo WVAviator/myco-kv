@@ -3,13 +3,13 @@ use std::{
     net::TcpStream,
 };
 
-pub fn send_request(server_address: &str, message: &str) -> Result<String, std::io::Error> {
-    let mut stream = TcpStream::connect(server_address)?;
-
+pub fn send_request(stream: &mut TcpStream, message: &str) -> Result<String, std::io::Error> {
     stream.write_all(message.as_bytes())?;
 
-    let buf_reader = BufReader::new(&mut stream);
-    let response = buf_reader.lines().map(|line| line.unwrap()).collect();
+    let mut buf_reader = BufReader::new(stream);
+    let mut response = String::new();
+
+    buf_reader.read_line(&mut response)?;
 
     Ok(response)
 }

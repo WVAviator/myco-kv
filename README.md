@@ -12,7 +12,15 @@ MycoKV is still in active development without a release, however if you would li
 
 ## Using MycoKV
 
-At this time, MycoKV is only configured to run with the built-in REPL that opens upon starting the database server. 
+MycoKV is configured to run with the built-in REPL that opens upon starting the database server, or if you prefer you can use a client/server application protocol such as [Telnet](https://en.wikipedia.org/wiki/Telnet) to connect to the server and send commands.
+
+By default, MycoKV runs on port 6922, however this can be changed by flag when starting the server, using either of the following commands:
+
+```bash
+cargo run -- --port 1234
+cargo run -- -p 1234
+```
+
 In the future, drivers and SDKs for MycoKV will be developed in many popular languages and frameworks, including Java, Node.js, and Python.
 
 ### Basic Usage
@@ -20,12 +28,15 @@ In the future, drivers and SDKs for MycoKV will be developed in many popular lan
 At its current stage of development, MycoKV currently supports three commands, `GET`, `PUT`, and `DELETE`.
 
 Example usage:
+
 ```
 PUT mykey "my value"
 GET mykey
 DELETE mykey
 ```
-When sending `GET mykey`, the result is returned as a JSON object consisting of the requested key-value pair: 
+
+When sending `GET mykey`, the result is returned as a JSON object consisting of the requested key-value pair:
+
 ```
 "{"mykey":"my value"}"
 ```
@@ -37,6 +48,7 @@ Nested values are delimited by a `.`.
 Querying multiple nested keys can be done using a wildcard `*` as the last nested value.
 
 Example usage:
+
 ```
 PUT mykey "Value 1"
 PUT mykey.a "Value 2"
@@ -45,16 +57,18 @@ GET mykey.*
 ```
 
 The result of sending the above GET request would be the following JSON object consisting of all nested keys as well as the parent key:
+
 ```
 "{"mykey":"Value 1","mykey.a":"Value 2","mykey.b":"Value 3"}"
 ```
 
 ### Depth Limiting
 
-MycoKV keys can be nested arbitralily deep if desired - however in some cases you may wish to limit the depth of the keys you are retrieving. 
+MycoKV keys can be nested arbitralily deep if desired - however in some cases you may wish to limit the depth of the keys you are retrieving.
 This can be done by appending a "maximum depth" integer to the wildcard operator.
 
 Example usage:
+
 ```
 PUT players.p1 = "John Doe"
 PUT players.p2 = "Jane Doe"
@@ -64,9 +78,11 @@ GET players.*1
 ```
 
 The result of sending the above get request is to only fetch values one level deep from the `players` key, returning the below JSON result:
+
 ```
 "{"players.p1":"John Doe","players.p2":"Jane Doe"}"
 ```
+
 Note that the nested "health" keys were not returned, because those exist at a nested depth of 2 and the max depth requested was 1.
 
 ## Contributing
