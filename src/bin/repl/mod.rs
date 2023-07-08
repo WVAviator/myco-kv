@@ -14,14 +14,17 @@ pub fn start(port: u16) {
 
     loop {
         let mut buffer = String::new();
-        reader.read_line(&mut buffer).expect("Could not read from buffer");
+        if let Err(_) = reader.read_line(&mut buffer) {
+            println!("Unable to read input, please try again.");
+            continue;
+        }
 
         match send::send_request(&mut stream, &buffer) {
             Ok(response) => {
                 println!("{}", response);
             }
             Err(e) => {
-                eprintln!("ERR: {}", e);
+                eprintln!("Error occurred communicating with server: {}", e);
             }
         }
     }

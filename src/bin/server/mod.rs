@@ -34,7 +34,6 @@ fn handle_connection(mut stream: TcpStream, kvmap: Arc<Mutex<KVMap>>) {
         match buf_reader.read_line(&mut request) {
             Ok(_) => {
                 let operation = parse_operation(&request);
-                println!("Parsed operation: {:?}", operation);
 
                 let response = match operation {
                     Ok(operation) => {
