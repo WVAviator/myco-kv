@@ -1,14 +1,14 @@
 use clap::Parser;
-use logger::Logger;
 use myco_kv::{eventbroker, kvmap::KVMap};
 use std::{
     sync::{Arc, Mutex},
     thread,
 };
+use wal::WriteAheadLog;
 
-mod logger;
 mod repl;
 mod server;
+mod wal;
 
 #[derive(Parser, Debug)]
 #[command(name = "MycoKV", version = "0.1.0", author = "WVAviator")]
@@ -24,13 +24,13 @@ fn main() {
     let event_broker = eventbroker::EventBroker::new();
     let event_broker = Arc::new(Mutex::new(event_broker));
 
-    let logger = Logger::new();
+    let wal = WriteAheadLog::new();
     let mut kvmap = KVMap::new(Arc::clone(&event_broker));
-    logger.restore(&mut kvmap);
+    wal.restore(&mut kvmap);
 
     {
         let mut event_broker = event_broker.lock().unwrap();
-        event_broker.subscribe(Box::new(logger));
+        event_broker.subscribe(Box::new(wal));
     }
 
     let kvmap = Arc::new(Mutex::new(kvmap));

@@ -10,19 +10,19 @@ use myco_kv::{
     parser::parse_operation,
 };
 
-pub struct Logger {
+pub struct WriteAheadLog {
     file: File,
 }
 
-impl Logger {
-    pub fn new() -> Logger {
+impl WriteAheadLog {
+    pub fn new() -> WriteAheadLog {
         let file = OpenOptions::new()
             .append(true)
             .create(true)
             .open("log.txt")
             .expect("Cannot open log file.");
 
-        Logger { file }
+        WriteAheadLog { file }
     }
 
     pub fn restore(&self, kvmap: &mut KVMap) {
@@ -53,7 +53,7 @@ impl Logger {
     }
 }
 
-impl Subscriber for Logger {
+impl Subscriber for WriteAheadLog {
     fn notify(&mut self, event: &Event) {
         match event {
             Event::Put { key, value } => {
