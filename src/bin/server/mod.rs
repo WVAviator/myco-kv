@@ -5,7 +5,7 @@ use std::{
     thread,
 };
 
-use myco_kv::{kvmap::KVMap, parser::parse_operation};
+use myco_kv::{kvmap::KVMap, operation::Operation};
 
 pub fn start(port: u16, kvmap: Arc<Mutex<KVMap>>) {
     let addr = format!("localhost:{}", port);
@@ -33,7 +33,7 @@ fn handle_connection(mut stream: TcpStream, kvmap: Arc<Mutex<KVMap>>) {
         let mut request = String::new();
         match buf_reader.read_line(&mut request) {
             Ok(_) => {
-                let operation = parse_operation(&request);
+                let operation = Operation::parse(request);
 
                 let response = match operation {
                     Ok(operation) => {

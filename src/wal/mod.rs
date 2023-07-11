@@ -53,31 +53,4 @@ impl WriteAheadLog {
         let lines = reader.lines().skip(offset);
         Ok(lines)
     }
-
-    // pub fn restore(&self, kvmap: &mut KVMap) {
-    //     let start = SystemTime::now();
-    //     let mut file = File::open("log.txt").expect("Cannot open log file.");
-    //     let mut contents = String::new();
-    //     file.read_to_string(&mut contents)
-    //         .expect("Cannot read log file.");
-
-    //     let lines = contents.split("\n");
-    //     let mut line_count = 0;
-    //     for line in lines {
-    //         if line.eq("") {
-    //             continue;
-    //         }
-    //         line_count += 1;
-    //         let operation = parse_operation(line).expect("Cannot parse operation from logfile.");
-    //         kvmap
-    //             .process_operation(operation)
-    //             .expect("Cannot process operation from logfile.");
-    //     }
-    //     let end = SystemTime::now();
-    //     println!(
-    //         "Restored {} entries from log in {}ms",
-    //         line_count,
-    //         end.duration_since(start).unwrap().as_millis()
-    //     );
-    // }
 }

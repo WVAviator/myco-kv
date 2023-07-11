@@ -1,8 +1,7 @@
-use std::sync::{Arc, Mutex};
-
 use crate::operation::Operation;
 use crate::radixtree::RadixTree;
 use crate::wal::WriteAheadLog;
+use std::sync::{Arc, Mutex};
 
 use self::map_error::MapError;
 
@@ -19,6 +18,45 @@ impl KVMap {
             radix_tree: RadixTree::new(),
             wal,
         }
+    }
+
+    pub fn restore(&mut self) -> Result<(), MapError> {
+        let line_iter = self
+            .wal
+            .lock()
+            .unwrap()
+            .read_all_lines()
+            .map_err(|error| match error {
+                err => MapError::RestoreError(err.message()),
+            })?;
+
+        for line in line_iter {
+            let operation = Operation::parse(line.unwrap()).map_err(|error| match error {
+                err => MapError::RestoreError(err.message()),
+            })?;
+
+            let result: Result<(), MapError> = match operation {
+                Operation::Get(_) => Ok(()),
+                Operation::Put(key, value) => {
+                    if let Err(error) = self.put(key, value) {
+                        return Err(MapError::RestoreError(error.message()));
+                    }
+                    Ok(())
+                }
+                Operation::Delete(key) => {
+                    if let Err(error) = self.delete(&key) {
+                        return Err(MapError::RestoreError(error.message()));
+                    }
+                    Ok(())
+                }
+            };
+
+            result.map_err(|error| match error {
+                err => MapError::RestoreError(err.message()),
+            })?;
+        }
+
+        Ok(())
     }
 
     pub fn get(&mut self, key: &str) -> Result<String, MapError> {

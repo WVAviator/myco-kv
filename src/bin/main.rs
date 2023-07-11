@@ -22,7 +22,11 @@ fn main() {
     let wal = WriteAheadLog::new().expect("Could not open database log.");
     let wal = Arc::new(Mutex::new(wal));
 
-    let kvmap = KVMap::new(wal);
+    let mut kvmap = KVMap::new(wal);
+    kvmap
+        .restore()
+        .expect("Could not restore database from log.");
+
     let kvmap = Arc::new(Mutex::new(kvmap));
 
     let server_kvmap = Arc::clone(&kvmap);
