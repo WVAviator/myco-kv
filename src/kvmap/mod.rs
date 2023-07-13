@@ -62,21 +62,10 @@ impl KVMap {
     pub fn get(&mut self, key: &str) -> Result<String, MapError> {
         let result = self.radix_tree.get(key);
 
-        match result {
-            Ok(value) => {
-                if value.is_empty() {
-                    return Err(MapError::EmptyValue(key.to_string()));
-                }
-
-                let json = serde_json::to_string(&value).unwrap();
-
-                Ok(json)
-            }
-            Err(_) => Err(MapError::KeyNotFound(key.to_string())),
-        }
+        result.map_err(|_| MapError::KeyNotFound(key.to_string()))
     }
 
-    pub fn put(&mut self, key: String, value: String) -> Result<(), MapError> {
+    pub fn put(&mut self, key: String, value: String) -> Result<String, MapError> {
         let result = self.radix_tree.put(key.to_string(), value.to_string());
         result.map_err(|_| MapError::InvalidKey(key))
     }
@@ -88,26 +77,7 @@ impl KVMap {
 
     /// Process an operation and return a result.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use myco_kv::kvmap::KVMap;
-    /// use myco_kv::eventbroker::EventBroker;
-    /// use myco_kv::operation::Operation;
-    /// use std::sync::{Arc, Mutex};
-    ///
-    /// let event_broker = Arc::new(Mutex::new(EventBroker::new()));
-    /// let mut map = KVMap::new(event_broker.clone());
-    /// map.put("key".to_string(), "value".to_string());
-    ///
-    /// let operation = Operation::Get("key".to_string());
-    /// let result = map.process_operation(operation);
-    ///
-    /// assert_eq!(result, Ok(r#"{"key":"value"}"#.to_string()));
-    /// ```
-    ///
     /// # Errors
-    ///
     /// Returns a `MapError` if the key does not exist in the map.
     ///
     pub fn process_operation(&mut self, operation: Operation) -> Result<String, MapError> {
@@ -122,10 +92,7 @@ impl KVMap {
 
         match operation {
             Operation::Get(key) => self.get(&key),
-            Operation::Put(key, value) => {
-                self.put(key.to_string(), value.to_string())?;
-                Ok("OK".to_string())
-            }
+            Operation::Put(key, value) => self.put(key.to_string(), value.to_string()),
             Operation::Delete(key) => self.delete(&key),
         }
     }
@@ -134,7 +101,8 @@ impl KVMap {
 #[cfg(test)]
 mod test {
     use super::*;
-    use serde_json::map;
+    use assert_json_diff::assert_json_eq;
+    use serde_json::{json, Value};
 
     #[test]
     fn test_put_and_get() {
@@ -142,9 +110,7 @@ mod test {
         let mut map = super::KVMap::new(wal_mutex.clone());
         map.put("key".to_string(), "value".to_string()).unwrap();
 
-        let expected = r#"{"key":"value"}"#.to_string();
-
-        assert_eq!(map.get("key"), Ok(expected));
+        assert_eq!(map.get("key"), Ok("value".to_string()));
     }
 
     #[test]
@@ -154,7 +120,10 @@ mod test {
         map.put("key".to_string(), "value".to_string()).unwrap();
 
         assert_eq!(map.delete("key"), Ok("value".to_string()));
-        assert_eq!(map.get("key"), Err(MapError::EmptyValue("key".to_string())));
+        assert_eq!(
+            map.get("key"),
+            Err(MapError::KeyNotFound("key".to_string()))
+        );
     }
 
     #[test]
@@ -165,9 +134,7 @@ mod test {
 
         let operation = super::Operation::Get("key".to_string());
 
-        let expected = r#"{"key":"value"}"#.to_string();
-
-        assert_eq!(map.process_operation(operation), Ok(expected));
+        assert_eq!(map.process_operation(operation), Ok("value".to_string()));
     }
 
     #[test]
@@ -176,11 +143,9 @@ mod test {
         let mut map = super::KVMap::new(wal_mutex.clone());
 
         let operation = super::Operation::Put("key".to_string(), "value".to_string());
-        assert_eq!(map.process_operation(operation), Ok("OK".to_string()));
+        assert_eq!(map.process_operation(operation), Ok("value".to_string()));
 
-        let expected = r#"{"key":"value"}"#.to_string();
-
-        assert_eq!(map.get("key"), Ok(expected));
+        assert_eq!(map.get("key"), Ok("value".to_string()));
     }
 
     #[test]
@@ -191,7 +156,10 @@ mod test {
 
         let operation = super::Operation::Delete("key".to_string());
         assert_eq!(map.process_operation(operation), Ok("value".to_string()));
-        assert_eq!(map.get("key"), Err(MapError::EmptyValue("key".to_string())));
+        assert_eq!(
+            map.get("key"),
+            Err(MapError::KeyNotFound("key".to_string()))
+        );
     }
 
     #[test]
@@ -230,14 +198,18 @@ mod test {
 
         let operation = super::Operation::Get("key.*".to_string());
 
-        let expected = r#"{"key.abc":"value1","key.def":"value2"}"#.to_string();
+        let expected = json!(
+            {
+                "abc": "value1",
+                "def": "value2"
+            }
+        );
         let actual = map.process_operation(operation).unwrap();
+        println!("JSON: {}", actual);
+        let actual: Value = serde_json::from_str(&actual).unwrap();
 
-        let expected_map: map::Map<String, serde_json::Value> =
-            serde_json::from_str(&expected).unwrap();
-        let actual_map: map::Map<String, serde_json::Value> =
-            serde_json::from_str(&actual).unwrap();
+        println!("JSON: {}", actual);
 
-        assert_eq!(expected_map, actual_map);
+        assert_json_eq!(expected, actual);
     }
 }

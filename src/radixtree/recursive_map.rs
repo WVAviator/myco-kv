@@ -23,7 +23,7 @@ impl RecursiveMap {
 #[cfg(test)]
 mod test {
     use assert_json_diff::assert_json_eq;
-    use serde_json::{json, Value};
+    use serde_json::json;
 
     use super::*;
 

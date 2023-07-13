@@ -92,8 +92,9 @@ impl RadixTree {
         }
     }
 
-    pub fn put(&mut self, key: String, value: String) -> Result<(), RadixError> {
+    pub fn put(&mut self, key: String, value: String) -> Result<String, RadixError> {
         let mut current = &mut self.root;
+        let value_clone = value.clone();
         let parts: Vec<&str> = key.split(".").collect();
         for (i, part) in parts.iter().enumerate() {
             if part.starts_with("*") {
@@ -110,7 +111,7 @@ impl RadixTree {
         }
         self.map.insert(key, value);
 
-        Ok(())
+        Ok(value_clone)
     }
 
     pub fn delete(&mut self, key: String) -> Result<String, RadixError> {
