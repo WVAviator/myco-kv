@@ -1,7 +1,7 @@
 pub enum AccessType {
     Direct,
     FullSubtree(String),
-    PartialSubtree(String, u32),
+    PartialSubtree(String, usize),
 }
 
 impl AccessType {
@@ -14,7 +14,7 @@ impl AccessType {
             AccessType::FullSubtree(key)
         } else if last_part.chars().nth(0).unwrap() == '*' {
             let key = parts[0..parts.len() - 1].join(".");
-            AccessType::PartialSubtree(key, last_part[1..].parse::<u32>().unwrap())
+            AccessType::PartialSubtree(key, last_part[1..].parse::<usize>().unwrap())
         } else {
             AccessType::Direct
         }
