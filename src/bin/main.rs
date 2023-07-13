@@ -1,12 +1,10 @@
 use clap::Parser;
-use logger::Logger;
-use myco_kv::{eventbroker, kvmap::KVMap};
+use myco_kv::{kvmap::KVMap, wal::WriteAheadLog};
 use std::{
     sync::{Arc, Mutex},
     thread,
 };
 
-mod logger;
 mod repl;
 mod server;
 
@@ -21,17 +19,13 @@ fn main() {
     let args = Args::parse();
     let port = args.port.unwrap();
 
-    let event_broker = eventbroker::EventBroker::new();
-    let event_broker = Arc::new(Mutex::new(event_broker));
+    let wal = WriteAheadLog::new().expect("Could not open database log.");
+    let wal = Arc::new(Mutex::new(wal));
 
-    let logger = Logger::new();
-    let mut kvmap = KVMap::new(Arc::clone(&event_broker));
-    logger.restore(&mut kvmap);
-
-    {
-        let mut event_broker = event_broker.lock().unwrap();
-        event_broker.subscribe(Box::new(logger));
-    }
+    let mut kvmap = KVMap::new(wal);
+    kvmap
+        .restore()
+        .expect("Could not restore database from log.");
 
     let kvmap = Arc::new(Mutex::new(kvmap));
 
