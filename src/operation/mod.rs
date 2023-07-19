@@ -1,6 +1,7 @@
 use self::parse_error::ParseError;
 
 pub mod parse_error;
+pub mod value;
 
 #[derive(Debug, PartialEq)]
 pub enum Operation {
