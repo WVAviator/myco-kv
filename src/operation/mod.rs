@@ -64,13 +64,24 @@ mod tests {
     }
 
     #[test]
-    fn parse_put_number() {
+    fn parse_put_float() {
         let test_statement = "PUT key 123.45";
         let operation = Operation::parse(test_statement.to_string()).unwrap();
 
         assert_eq!(
             operation,
-            Operation::Put("key".to_string(), Value::Number(123.45))
+            Operation::Put("key".to_string(), Value::Float(123.45))
+        );
+    }
+
+    #[test]
+    fn parse_put_integer() {
+        let test_statement = "PUT key -123";
+        let operation = Operation::parse(test_statement.to_string()).unwrap();
+
+        assert_eq!(
+            operation,
+            Operation::Put("key".to_string(), Value::Integer(-123))
         );
     }
 

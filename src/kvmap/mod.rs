@@ -210,10 +210,37 @@ mod test {
             }
         );
         let actual = map.process_operation(operation).unwrap();
-        println!("JSON: {}", actual);
         let actual: serde_json::Value = serde_json::from_str(&actual).unwrap();
 
-        println!("JSON: {}", actual);
+        assert_json_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_process_multiple_value_types() {
+        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new().unwrap()));
+        let mut map = super::KVMap::new(wal_mutex.clone());
+
+        map.put("key.abc".to_string(), Value::String("value1".to_string()))
+            .unwrap();
+        map.put("key.def".to_string(), Value::Integer(123)).unwrap();
+        map.put("key.ghi".to_string(), Value::Boolean(true))
+            .unwrap();
+        map.put("key.jkl".to_string(), Value::Null).unwrap();
+        map.put("key.mno".to_string(), Value::Float(1.23)).unwrap();
+
+        let operation = super::Operation::Get("key.*".to_string());
+        let expected = json!(
+            {
+                "abc": "value1",
+                "def": 123,
+                "ghi": true,
+                "jkl": null,
+                "mno": 1.23
+            }
+        );
+
+        let actual = map.process_operation(operation).unwrap();
+        let actual: serde_json::Value = serde_json::from_str(&actual).unwrap();
 
         assert_json_eq!(expected, actual);
     }
