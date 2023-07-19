@@ -25,8 +25,7 @@ In the future, drivers and SDKs for MycoKV will be developed in many popular lan
 
 ### Basic Usage
 
-At its current stage of development, MycoKV currently supports three commands, `GET`, `PUT`, and `DELETE`.
-
+At its current stage of development, MycoKV currently supports three commands, `GET`, `PUT`, and `DELETE`. You can store floats, integers, strings, booleans, and even null as values.
 Example usage:
 
 ```
@@ -52,9 +51,9 @@ Querying multiple nested keys can be done using a wildcard `*` as the last neste
 Example usage:
 
 ```
-PUT kitchen.cupboards "4"
+PUT kitchen.cupboards 4
 PUT kitchen.countertops "granite"
-PUT kitchen.refrigerator.eggs "12"
+PUT kitchen.refrigerator.eggs 12
 GET kitchen.*
 ```
 
@@ -62,10 +61,10 @@ The result of sending the above GET request would be the following JSON object c
 
 ```json
 {
-  "cupboards": "4",
+  "cupboards": 4,
   "countertops": "granite",
   "refrigerator": {
-    "eggs": "12"
+    "eggs": 12
   }
 }
 ```
@@ -75,10 +74,10 @@ Note that if the parent key has a value set as well, for example by calling `PUT
 ```json
 {
   "_": "tuscan",
-  "cupboards": "4",
+  "cupboards": 4,
   "countertops": "granite",
   "refrigerator": {
-    "eggs": "12"
+    "eggs": 12
   }
 }
 ```
@@ -93,8 +92,8 @@ Example usage:
 ```
 PUT players.p1 "John Doe"
 PUT players.p2 "Jane Doe"
-PUT players.p1.health "80"
-PUT players.p2.health "75"
+PUT players.p1.health 80
+PUT players.p2.health 75.5
 GET players.*1
 ```
 

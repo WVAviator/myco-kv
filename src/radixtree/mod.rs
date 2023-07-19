@@ -3,6 +3,8 @@ mod radixerror;
 mod radixnode;
 mod recursive_map;
 
+use crate::operation::value::Value;
+
 use self::{
     accesstype::AccessType, radixerror::RadixError, radixnode::RadixNode,
     recursive_map::RecursiveMap,
@@ -11,7 +13,7 @@ use std::collections::HashMap;
 
 pub struct RadixTree {
     root: RadixNode,
-    map: HashMap<String, String>,
+    map: HashMap<String, Value>,
 }
 
 impl RadixTree {
@@ -25,15 +27,15 @@ impl RadixTree {
     pub fn serialize_subtree(&self, head: &RadixNode, depth: usize) -> RecursiveMap {
         if head.children.len() == 0 {
             return match self.map.get(&head.key) {
-                Some(value) => RecursiveMap::String(value.to_string()),
-                None => RecursiveMap::String(String::from("")),
+                Some(value) => RecursiveMap::Value(value.clone()),
+                None => RecursiveMap::Value(Value::Null),
             };
         }
         let mut map: HashMap<String, RecursiveMap> = HashMap::new();
         for child in head.children.keys() {
             if depth == 1 {
                 if let Some(value) = self.map.get(head.children.get(child).unwrap().key.as_str()) {
-                    map.insert(child.to_string(), RecursiveMap::String(value.to_string()));
+                    map.insert(child.to_string(), RecursiveMap::Value(value.clone()));
                 }
                 continue;
             }
@@ -45,7 +47,7 @@ impl RadixTree {
         }
 
         if let Some(value) = self.map.get(&head.key) {
-            map.insert(String::from("_"), RecursiveMap::String(value.to_string()));
+            map.insert(String::from("_"), RecursiveMap::Value(value.clone()));
         }
 
         RecursiveMap::Map(map)
@@ -92,9 +94,9 @@ impl RadixTree {
         }
     }
 
-    pub fn put(&mut self, key: String, value: String) -> Result<String, RadixError> {
+    pub fn put(&mut self, key: String, value: Value) -> Result<String, RadixError> {
         let mut current = &mut self.root;
-        let value_clone = value.clone();
+        let value_result = value.to_string();
         let parts: Vec<&str> = key.split(".").collect();
         for (i, part) in parts.iter().enumerate() {
             if part.starts_with("*") {
@@ -111,7 +113,7 @@ impl RadixTree {
         }
         self.map.insert(key, value);
 
-        Ok(value_clone)
+        Ok(value_result)
     }
 
     pub fn delete(&mut self, key: String) -> Result<String, RadixError> {
@@ -134,7 +136,7 @@ impl RadixTree {
 
         let value = self.map.remove(&key).unwrap();
 
-        Ok(value)
+        Ok(value.to_string())
     }
 }
 
@@ -148,7 +150,9 @@ mod test {
     #[test]
     fn puts_and_gets_single_value() {
         let mut radix = RadixTree::new();
-        radix.put("key".to_string(), "value".to_string()).unwrap();
+        radix
+            .put("key".to_string(), Value::String("value".to_string()))
+            .unwrap();
 
         assert_eq!(radix.get("key").unwrap(), "value".to_string());
     }
@@ -157,7 +161,10 @@ mod test {
     fn puts_and_gets_nested_single_value() {
         let mut radix = RadixTree::new();
         radix
-            .put("key.abc.def".to_string(), "value".to_string())
+            .put(
+                "key.abc.def".to_string(),
+                Value::String("value".to_string()),
+            )
             .unwrap();
 
         assert_eq!(radix.get("key.abc.def").unwrap(), "value".to_string());
@@ -167,13 +174,13 @@ mod test {
     fn puts_and_gets_multiple_values() {
         let mut radix = RadixTree::new();
         radix
-            .put("key.a".to_string(), "value1".to_string())
+            .put("key.a".to_string(), Value::String("value1".to_string()))
             .unwrap();
         radix
-            .put("key.b".to_string(), "value2".to_string())
+            .put("key.b".to_string(), Value::String("value2".to_string()))
             .unwrap();
         radix
-            .put("key.c".to_string(), "value3".to_string())
+            .put("key.c".to_string(), Value::String("value3".to_string()))
             .unwrap();
 
         let expected = json!(
@@ -194,13 +201,13 @@ mod test {
     fn puts_and_gets_nested_subtree() {
         let mut radix = RadixTree::new();
         radix
-            .put("key.a".to_string(), "value1".to_string())
+            .put("key.a".to_string(), Value::String("value1".to_string()))
             .unwrap();
         radix
-            .put("key.b".to_string(), "value2".to_string())
+            .put("key.b".to_string(), Value::String("value2".to_string()))
             .unwrap();
         radix
-            .put("key.b.a".to_string(), "value3".to_string())
+            .put("key.b.a".to_string(), Value::String("value3".to_string()))
             .unwrap();
 
         let expected = json!(
@@ -223,13 +230,13 @@ mod test {
     fn puts_and_gets_partial_subtree() {
         let mut radix = RadixTree::new();
         radix
-            .put("key.a".to_string(), "value1".to_string())
+            .put("key.a".to_string(), Value::String("value1".to_string()))
             .unwrap();
         radix
-            .put("key.b".to_string(), "value2".to_string())
+            .put("key.b".to_string(), Value::String("value2".to_string()))
             .unwrap();
         radix
-            .put("key.b.a".to_string(), "value3".to_string())
+            .put("key.b.a".to_string(), Value::String("value3".to_string()))
             .unwrap();
 
         let expected = json!(

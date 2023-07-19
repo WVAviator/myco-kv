@@ -1,11 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use crate::operation::value::Value;
+
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum RecursiveMap {
     Map(HashMap<String, RecursiveMap>),
-    String(String),
+    Value(Value),
 }
 
 impl RecursiveMap {
@@ -32,21 +34,21 @@ mod test {
         let mut cupboard_contents = HashMap::new();
         cupboard_contents.insert(
             String::from("cups"),
-            RecursiveMap::String(String::from("3")),
+            RecursiveMap::Value(Value::String("3".to_string())),
         );
         cupboard_contents.insert(
             String::from("plates"),
-            RecursiveMap::String(String::from("4")),
+            RecursiveMap::Value(Value::String("4".to_string())),
         );
 
         let mut refrigerator_contents = HashMap::new();
         refrigerator_contents.insert(
             String::from("milk"),
-            RecursiveMap::String(String::from("1")),
+            RecursiveMap::Value(Value::String("1".to_string())),
         );
         refrigerator_contents.insert(
             String::from("eggs"),
-            RecursiveMap::String(String::from("12")),
+            RecursiveMap::Value(Value::String("12".to_string())),
         );
 
         let mut kitchen_contents = HashMap::new();
