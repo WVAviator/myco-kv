@@ -1,4 +1,4 @@
-use self::parse_error::ParseError;
+use self::{parse_error::ParseError, value::Value};
 
 pub mod parse_error;
 pub mod value;
@@ -6,7 +6,7 @@ pub mod value;
 #[derive(Debug, PartialEq)]
 pub enum Operation {
     Get(String),
-    Put(String, String),
+    Put(String, Value),
     Delete(String),
 }
 
@@ -26,12 +26,10 @@ impl Operation {
                 if value.is_empty() {
                     return Err(ParseError::MissingValue);
                 }
-                if value.chars().next() != Some('"') || value.chars().last() != Some('"') {
-                    return Err(ParseError::InvalidValue(value));
-                }
-                let value = value.trim_matches('"');
 
-                Ok(Operation::Put(key.to_string(), value.to_string()))
+                let value = Value::parse(&value)?;
+
+                Ok(Operation::Put(key.to_string(), value))
             }
             Some("DELETE") => {
                 let key = parts.next().ok_or(ParseError::MissingKey)?;
@@ -61,8 +59,38 @@ mod tests {
 
         assert_eq!(
             operation,
-            Operation::Put("key".to_string(), "value".to_string())
+            Operation::Put("key".to_string(), Value::String("value".to_string()))
         );
+    }
+
+    #[test]
+    fn parse_put_number() {
+        let test_statement = "PUT key 123.45";
+        let operation = Operation::parse(test_statement.to_string()).unwrap();
+
+        assert_eq!(
+            operation,
+            Operation::Put("key".to_string(), Value::Number(123.45))
+        );
+    }
+
+    #[test]
+    fn parse_put_boolean() {
+        let test_statement = "PUT key true";
+        let operation = Operation::parse(test_statement.to_string()).unwrap();
+
+        assert_eq!(
+            operation,
+            Operation::Put("key".to_string(), Value::Boolean(true))
+        );
+    }
+
+    #[test]
+    fn parse_put_null() {
+        let test_statement = "PUT key null";
+        let operation = Operation::parse(test_statement.to_string()).unwrap();
+
+        assert_eq!(operation, Operation::Put("key".to_string(), Value::Null));
     }
 
     #[test]
@@ -72,7 +100,10 @@ mod tests {
 
         assert_eq!(
             operation,
-            Operation::Put("key".to_string(), "long value with many spaces".to_string())
+            Operation::Put(
+                "key".to_string(),
+                Value::String("long value with many spaces".to_string())
+            )
         );
     }
 

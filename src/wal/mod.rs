@@ -27,7 +27,7 @@ impl WriteAheadLog {
             // Ignore get operations since they have no affect on db state
             Operation::Get(_) => return Ok(()),
 
-            Operation::Put(key, value) => format!("PUT {} \"{}\"\n", key, value),
+            Operation::Put(key, value) => format!("PUT {} \"{}\"\n", key, value.to_string()),
             Operation::Delete(key) => format!("DELETE {}\n", key),
         };
 

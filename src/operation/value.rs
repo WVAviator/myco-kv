@@ -1,7 +1,7 @@
 use super::parse_error::ParseError;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(untagged)]
 pub enum Value {
     String(String),
@@ -25,6 +25,15 @@ impl Value {
                     Err(ParseError::InvalidValue(value.to_string()))
                 }
             }
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        match self {
+            Value::String(string) => string.to_string(),
+            Value::Number(number) => number.to_string(),
+            Value::Boolean(boolean) => boolean.to_string(),
+            Value::Null => "null".to_string(),
         }
     }
 }
