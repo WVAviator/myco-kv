@@ -44,12 +44,15 @@ impl Value {
 
 #[cfg(test)]
 mod test {
-    
+
     use super::*;
-    
+
     #[test]
     fn parses_string() {
-        assert_eq!(Value::parse(r#""hello""#), Ok(Value::String("hello".to_string())));
+        assert_eq!(
+            Value::parse(r#""hello""#),
+            Ok(Value::String("hello".to_string()))
+        );
     }
 
     #[test]
@@ -75,12 +78,18 @@ mod test {
 
     #[test]
     fn parses_invalid_value() {
-        assert_eq!(Value::parse("hello"), Err(ParseError::InvalidValue("hello".to_string())));
+        assert_eq!(
+            Value::parse("hello"),
+            Err(ParseError::InvalidValue("hello".to_string()))
+        );
     }
 
     #[test]
     fn converts_string_to_string() {
-        assert_eq!("hello".to_string(), Value::String("hello".to_string()).to_string());
+        assert_eq!(
+            "hello".to_string(),
+            Value::String("hello".to_string()).to_string()
+        );
     }
 
     #[test]
@@ -92,5 +101,4 @@ mod test {
     fn converts_null_to_string() {
         assert_eq!("null", Value::Null.to_string());
     }
-
 }
