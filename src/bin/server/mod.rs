@@ -8,11 +8,11 @@ use std::{
 use myco_kv::{kvmap::KVMap, operation::Operation};
 
 pub fn start(port: u16, kvmap: Arc<Mutex<KVMap>>) {
-    let addr = format!("localhost:{}", port);
+    let addr = format!("0.0.0.0:{}", port);
 
     let listener = TcpListener::bind(&addr).unwrap();
 
-    println!("Server listening on {}", &addr);
+    println!("Server listening on port: {}", port);
 
     let mut instances = Vec::new();
 
