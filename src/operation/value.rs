@@ -33,7 +33,7 @@ impl Value {
 
     pub fn to_string(&self) -> String {
         match self {
-            Value::String(string) => string.to_string(),
+            Value::String(string) => format!("\"{}\"", string),
             Value::Integer(number) => number.to_string(),
             Value::Float(number) => number.to_string(),
             Value::Boolean(boolean) => boolean.to_string(),
@@ -87,7 +87,7 @@ mod test {
     #[test]
     fn converts_string_to_string() {
         assert_eq!(
-            "hello".to_string(),
+            "\"hello\"".to_string(),
             Value::String("hello".to_string()).to_string()
         );
     }
