@@ -154,7 +154,7 @@ mod test {
             .put("key".to_string(), Value::String("value".to_string()))
             .unwrap();
 
-        assert_eq!(radix.get("key").unwrap(), "value".to_string());
+        assert_eq!(radix.get("key").unwrap(), "\"value\"".to_string());
     }
 
     #[test]
@@ -167,7 +167,7 @@ mod test {
             )
             .unwrap();
 
-        assert_eq!(radix.get("key.abc.def").unwrap(), "value".to_string());
+        assert_eq!(radix.get("key.abc.def").unwrap(), "\"value\"".to_string());
     }
 
     #[test]
