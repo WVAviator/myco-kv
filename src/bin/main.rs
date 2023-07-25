@@ -19,7 +19,7 @@ fn main() {
     let args = Args::parse();
     let port = args.port.unwrap();
 
-    let wal = WriteAheadLog::new().expect("Could not open database log.");
+    let wal = WriteAheadLog::new("log.txt").expect("Could not open database log.");
     let wal = Arc::new(Mutex::new(wal));
 
     let mut kvmap = KVMap::new(wal);

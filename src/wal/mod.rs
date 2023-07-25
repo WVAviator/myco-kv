@@ -12,11 +12,11 @@ pub struct WriteAheadLog {
 }
 
 impl WriteAheadLog {
-    pub fn new() -> Result<WriteAheadLog, WALError> {
+    pub fn new(filename: &str) -> Result<WriteAheadLog, WALError> {
         let file = OpenOptions::new()
             .append(true)
             .create(true)
-            .open("log.txt")
+            .open(filename)
             .map_err(|error| WALError::OpenError(error))?;
 
         Ok(WriteAheadLog { file })
