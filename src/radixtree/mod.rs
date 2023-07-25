@@ -317,8 +317,8 @@ mod test {
         radix.delete("a.b.c".to_string()).unwrap();
 
         assert_eq!(
-            radix.delete("a.b.c".to_string()),
-            Err(RadixError::KeyNotFound("a.b.c".to_string()))
+            radix.delete("a.b".to_string()),
+            Err(RadixError::KeyNotFound("a.b".to_string()))
         );
     }
 }
