@@ -137,7 +137,10 @@ mod test {
 
         let operation = super::Operation::Get("key".to_string());
 
-        assert_eq!(map.process_operation(operation), Ok("\"value\"".to_string()));
+        assert_eq!(
+            map.process_operation(operation),
+            Ok("\"value\"".to_string())
+        );
     }
 
     #[test]
@@ -147,7 +150,10 @@ mod test {
 
         let operation =
             super::Operation::Put("key".to_string(), Value::String("value".to_string()));
-        assert_eq!(map.process_operation(operation), Ok("\"value\"".to_string()));
+        assert_eq!(
+            map.process_operation(operation),
+            Ok("\"value\"".to_string())
+        );
 
         assert_eq!(map.get("key"), Ok("\"value\"".to_string()));
     }
@@ -160,7 +166,10 @@ mod test {
             .unwrap();
 
         let operation = super::Operation::Delete("key".to_string());
-        assert_eq!(map.process_operation(operation), Ok("\"value\"".to_string()));
+        assert_eq!(
+            map.process_operation(operation),
+            Ok("\"value\"".to_string())
+        );
         assert_eq!(
             map.get("key"),
             Err(MapError::KeyNotFound("key".to_string()))
