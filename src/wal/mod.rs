@@ -20,7 +20,10 @@ impl WriteAheadLog {
             .open(filename)
             .map_err(|error| WALError::OpenError(error))?;
 
-        Ok(WriteAheadLog { file, filename: filename.to_string() })
+        Ok(WriteAheadLog {
+            file,
+            filename: filename.to_string(),
+        })
     }
 
     pub fn write(&mut self, operation: &Operation) -> Result<(), WALError> {
@@ -28,7 +31,7 @@ impl WriteAheadLog {
             // Ignore get operations since they have no affect on db state
             Operation::Get(_) => return Ok(()),
 
-            Operation::Put(key, value) => format!("PUT {} \"{}\"\n", key, value.to_string()),
+            Operation::Put(key, value) => format!("PUT {} {}\n", key, value.to_string()),
             Operation::Delete(key) => format!("DELETE {}\n", key),
         };
 
