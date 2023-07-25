@@ -116,25 +116,45 @@ impl RadixTree {
         Ok(value_result)
     }
 
-    pub fn delete(&mut self, key: String) -> Result<String, RadixError> {
-        let mut current = &mut self.root;
-        let parts: Vec<&str> = key.split(".").collect();
-        for (i, part) in parts.iter().enumerate() {
-            if current.children.contains_key(*part) {
-                if i == parts.len() - 1 {
-                    let node_to_delete = current.children.get_mut(*part).unwrap();
-                    if node_to_delete.children.len() == 0 {
-                        current.children.remove(&part.to_string());
-                    }
-                    break;
-                }
-                current = current.children.get_mut(*part).unwrap();
-            } else {
-                return Err(RadixError::KeyNotFound(key.to_string()));
+    pub fn remove(
+        node: &mut RadixNode,
+        map: &HashMap<String, Value>,
+        parts: &[&str],
+    ) -> Result<bool, RadixError> {
+        if parts.is_empty() {
+            if node.children.is_empty() && !map.contains_key(&node.key) {
+                return Ok(true);
             }
+            return Ok(false);
         }
 
+        let part = parts[0];
+        let remaining_parts = &parts[1..];
+
+        if let Some(child) = node.children.get_mut(part) {
+            if Self::remove(child, map, remaining_parts)? {
+                node.children.remove(part);
+            }
+        } else {
+            return Err(RadixError::KeyNotFound(parts.join(".").to_string()));
+        }
+
+        if node.children.is_empty() && !map.contains_key(&node.key) {
+            return Ok(true);
+        }
+
+        Ok(false)
+    }
+
+    pub fn delete(&mut self, key: String) -> Result<String, RadixError> {
+        if !self.map.contains_key(&key) {
+            return Err(RadixError::KeyNotFound(key.clone()));
+        }
         let value = self.map.remove(&key).unwrap();
+
+        let parts: Vec<&str> = key.split(".").collect();
+
+        Self::remove(&mut self.root, &self.map, &parts)?;
 
         Ok(value.to_string())
     }
@@ -250,5 +270,55 @@ mod test {
         let actual = serde_json::from_str::<serde_json::Value>(&actual).unwrap();
 
         assert_json_eq!(actual, expected);
+    }
+
+    #[test]
+    fn deletes_empty_subtrees() {
+        let mut radix = RadixTree::new();
+        radix
+            .put("a.b.c".to_string(), Value::String("value".to_string()))
+            .unwrap();
+        radix
+            .put("a.b.c.d.z".to_string(), Value::String("value".to_string()))
+            .unwrap();
+        radix
+            .put(
+                "a.b.c.d.e.f".to_string(),
+                Value::String("value".to_string()),
+            )
+            .unwrap();
+        radix.delete("a.b.c.d.e.f".to_string()).unwrap();
+        radix.delete("a.b.c".to_string()).unwrap();
+
+        let expected = json!(
+            {
+                "b": {
+                    "c": {
+                        "d": {
+                            "z": "value"
+                        }
+                    }
+                }
+            }
+        );
+
+        let actual = radix.get("a.*").unwrap();
+        let actual = serde_json::from_str::<serde_json::Value>(&actual).unwrap();
+
+        assert_json_eq!(actual, expected);
+    }
+
+    #[test]
+    fn deletes_not_found_key_in_subtree_path() {
+        let mut radix = RadixTree::new();
+        radix
+            .put("a.b.c".to_string(), Value::String("value".to_string()))
+            .unwrap();
+        radix.delete("a.b.c".to_string()).unwrap();
+
+        assert_eq!(
+            radix.delete("a.b.c".to_string()),
+            Err(RadixError::KeyNotFound("a.b.c".to_string()))
+        );
     }
 }
