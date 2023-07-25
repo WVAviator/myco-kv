@@ -9,17 +9,21 @@ mod wal_error;
 
 pub struct WriteAheadLog {
     file: File,
+    filename: String,
 }
 
 impl WriteAheadLog {
-    pub fn new() -> Result<WriteAheadLog, WALError> {
+    pub fn new(filename: &str) -> Result<WriteAheadLog, WALError> {
         let file = OpenOptions::new()
             .append(true)
             .create(true)
-            .open("log.txt")
+            .open(filename)
             .map_err(|error| WALError::OpenError(error))?;
 
-        Ok(WriteAheadLog { file })
+        Ok(WriteAheadLog {
+            file,
+            filename: filename.to_string(),
+        })
     }
 
     pub fn write(&mut self, operation: &Operation) -> Result<(), WALError> {
@@ -27,7 +31,7 @@ impl WriteAheadLog {
             // Ignore get operations since they have no affect on db state
             Operation::Get(_) => return Ok(()),
 
-            Operation::Put(key, value) => format!("PUT {} \"{}\"\n", key, value.to_string()),
+            Operation::Put(key, value) => format!("PUT {} {}\n", key, value.to_string()),
             Operation::Delete(key) => format!("DELETE {}\n", key),
         };
 
@@ -48,9 +52,14 @@ impl WriteAheadLog {
         &self,
         offset: usize,
     ) -> Result<impl Iterator<Item = std::io::Result<String>>, WALError> {
-        let file = File::open("log.txt").map_err(|error| WALError::OpenError(error))?;
+        let file = File::open(&self.filename).map_err(|error| WALError::OpenError(error))?;
         let reader = BufReader::new(file);
         let lines = reader.lines().skip(offset);
         Ok(lines)
+    }
+
+    pub fn clear(&mut self) -> Result<(), WALError> {
+        self.file = File::create(&self.filename).map_err(|error| WALError::OpenError(error))?;
+        Ok(())
     }
 }

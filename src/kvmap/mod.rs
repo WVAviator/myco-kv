@@ -106,17 +106,19 @@ mod test {
 
     #[test]
     fn test_put_and_get() {
-        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new().unwrap()));
+        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new("log.test.txt").unwrap()));
         let mut map = super::KVMap::new(wal_mutex.clone());
         map.put("key".to_string(), Value::String("value".to_string()))
             .unwrap();
 
         assert_eq!(map.get("key"), Ok("\"value\"".to_string()));
+
+        wal_mutex.lock().unwrap().clear().unwrap();
     }
 
     #[test]
     fn test_delete() {
-        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new().unwrap()));
+        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new("log.test.txt").unwrap()));
         let mut map = super::KVMap::new(wal_mutex.clone());
         map.put("key".to_string(), Value::String("value".to_string()))
             .unwrap();
@@ -130,7 +132,7 @@ mod test {
 
     #[test]
     fn test_process_operation_get() {
-        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new().unwrap()));
+        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new("log.test.txt").unwrap()));
         let mut map = super::KVMap::new(wal_mutex.clone());
         map.put("key".to_string(), Value::String("value".to_string()))
             .unwrap();
@@ -145,7 +147,7 @@ mod test {
 
     #[test]
     fn test_process_operation_put() {
-        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new().unwrap()));
+        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new("log.test.txt").unwrap()));
         let mut map = super::KVMap::new(wal_mutex.clone());
 
         let operation =
@@ -160,7 +162,7 @@ mod test {
 
     #[test]
     fn test_process_operation_delete() {
-        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new().unwrap()));
+        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new("log.test.txt").unwrap()));
         let mut map = super::KVMap::new(wal_mutex.clone());
         map.put("key".to_string(), Value::String("value".to_string()))
             .unwrap();
@@ -178,7 +180,7 @@ mod test {
 
     #[test]
     fn test_process_operation_get_key_not_found() {
-        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new().unwrap()));
+        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new("log.test.txt").unwrap()));
         let mut map = super::KVMap::new(wal_mutex.clone());
 
         let operation = super::Operation::Get("key".to_string());
@@ -190,7 +192,7 @@ mod test {
 
     #[test]
     fn test_process_operation_delete_key_not_found() {
-        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new().unwrap()));
+        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new("log.test.txt").unwrap()));
         let mut map = super::KVMap::new(wal_mutex.clone());
 
         let operation = super::Operation::Delete("key".to_string());
@@ -202,7 +204,7 @@ mod test {
 
     #[test]
     fn test_process_operation_get_multiple() {
-        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new().unwrap()));
+        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new("log.test.txt").unwrap()));
         let mut map = super::KVMap::new(wal_mutex.clone());
 
         map.put("key.abc".to_string(), Value::String("value1".to_string()))
@@ -226,7 +228,7 @@ mod test {
 
     #[test]
     fn test_process_multiple_value_types() {
-        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new().unwrap()));
+        let wal_mutex = Arc::new(Mutex::new(WriteAheadLog::new("log.test.txt").unwrap()));
         let mut map = super::KVMap::new(wal_mutex.clone());
 
         map.put("key.abc".to_string(), Value::String("value1".to_string()))
