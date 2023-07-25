@@ -9,6 +9,7 @@ mod wal_error;
 
 pub struct WriteAheadLog {
     file: File,
+    filename: String,
 }
 
 impl WriteAheadLog {
@@ -19,7 +20,7 @@ impl WriteAheadLog {
             .open(filename)
             .map_err(|error| WALError::OpenError(error))?;
 
-        Ok(WriteAheadLog { file })
+        Ok(WriteAheadLog { file, filename: filename.to_string() })
     }
 
     pub fn write(&mut self, operation: &Operation) -> Result<(), WALError> {
@@ -48,7 +49,7 @@ impl WriteAheadLog {
         &self,
         offset: usize,
     ) -> Result<impl Iterator<Item = std::io::Result<String>>, WALError> {
-        let file = File::open("log.txt").map_err(|error| WALError::OpenError(error))?;
+        let file = File::open(&self.filename).map_err(|error| WALError::OpenError(error))?;
         let reader = BufReader::new(file);
         let lines = reader.lines().skip(offset);
         Ok(lines)
