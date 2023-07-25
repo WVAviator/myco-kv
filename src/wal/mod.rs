@@ -57,4 +57,9 @@ impl WriteAheadLog {
         let lines = reader.lines().skip(offset);
         Ok(lines)
     }
+
+    pub fn clear(&mut self) -> Result<(), WALError> {
+        self.file = File::create(&self.filename).map_err(|error| WALError::OpenError(error))?;
+        Ok(())
+    }
 }

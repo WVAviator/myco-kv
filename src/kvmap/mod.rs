@@ -112,6 +112,8 @@ mod test {
             .unwrap();
 
         assert_eq!(map.get("key"), Ok("\"value\"".to_string()));
+
+        wal_mutex.lock().unwrap().clear().unwrap();
     }
 
     #[test]
