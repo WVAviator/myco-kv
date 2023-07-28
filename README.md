@@ -41,6 +41,28 @@ When sending `GET mykey`, the resulting value is returned as a plain string:
 value
 ```
 
+### Purging Data
+
+If you want to clear all entries in the database, you can use the `PURGE` command:
+
+```
+> PUT mykey 123
+123
+> GET mykey
+123
+> PURGE
+> GET mykey
+Error: Key not found
+```
+
+By default, MycoKV persists your data between server start/stop by writing to a log stored on your machine.
+
+If you do not wish to persist data between start/stop of the MycoKV server, you can start the application with the `--purge` flag, which will delete all log entries and start the database with a clean slate.
+
+```bash
+> cargo run -- --purge
+```
+
 ### Nested Keys
 
 MycoKV also supports "nested" keys, useful for grouping values together and querying multiple values at once.
