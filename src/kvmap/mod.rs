@@ -48,7 +48,8 @@ impl KVMap {
                         return Err(MapError::RestoreError(error.message()));
                     }
                     Ok(())
-                }
+                },
+                Operation::Purge => Ok(()),
             };
 
             result.map_err(|error| match error {
@@ -75,12 +76,47 @@ impl KVMap {
         result.map_err(|_| MapError::KeyNotFound(key.to_string()))
     }
 
+    pub fn purge(&mut self) -> Result<String, MapError> {
+        let result = self.radix_tree.purge();
+        result.map_err(|_| MapError::OperationFailure("Unable to purge data.".to_string()))?;
+        Ok(String::from("OK"))
+    }
+    
+    pub fn validate(&self, operation: &Operation) -> Result<(), MapError> {
+        match operation {
+            Operation::Get(key) => {
+                if let Err(_) = self.radix_tree.get(&key) {
+                    return Err(MapError::KeyNotFound(key.to_string()));
+                }
+                Ok(())
+            },
+            Operation::Put(key, _value) => {
+                for part in key.split(".") {
+                    if part == "*" || part == "_" {
+                        return Err(MapError::InvalidKey(key.to_string()));
+                    }
+                }
+                Ok(())
+            },
+            Operation::Delete(key) => {
+                if let Err(_) = self.radix_tree.get(&key) {
+                    return Err(MapError::KeyNotFound(key.to_string()));
+                }
+                Ok(())
+            },
+            Operation::Purge => Ok(())
+        }
+    }
+
     /// Process an operation and return a result.
     ///
     /// # Errors
     /// Returns a `MapError` if the key does not exist in the map.
     ///
     pub fn process_operation(&mut self, operation: Operation) -> Result<String, MapError> {
+        
+        self.validate(&operation)?;
+
         {
             // TODO: Validate operation before writing to WAL.
             self.wal
@@ -94,6 +130,7 @@ impl KVMap {
             Operation::Get(key) => self.get(&key),
             Operation::Put(key, value) => self.put(key.to_string(), value),
             Operation::Delete(key) => self.delete(&key),
+            Operation::Purge => self.purge(),
         }
     }
 }

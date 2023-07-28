@@ -33,6 +33,10 @@ impl WriteAheadLog {
 
             Operation::Put(key, value) => format!("PUT {} {}\n", key, value.to_string()),
             Operation::Delete(key) => format!("DELETE {}\n", key),
+            Operation::Purge => {
+                self.clear()?;
+                String::from("PURGE")
+            }
         };
 
         self.file

@@ -158,6 +158,12 @@ impl RadixTree {
 
         Ok(value.to_string())
     }
+
+    pub fn purge(&mut self) -> Result<(), RadixError> {
+       self.map = HashMap::new();
+       self.root = RadixNode::new("_".to_string());
+       Ok(())
+    }
 }
 
 #[cfg(test)]

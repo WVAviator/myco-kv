@@ -8,6 +8,7 @@ pub enum Operation {
     Get(String),
     Put(String, Value),
     Delete(String),
+    Purge,
 }
 
 impl Operation {
@@ -34,6 +35,9 @@ impl Operation {
             Some("DELETE") => {
                 let key = parts.next().ok_or(ParseError::MissingKey)?;
                 Ok(Operation::Delete(key.to_string()))
+            },
+            Some("PURGE") => {
+                Ok(Operation::Purge)
             }
             _ => Err(ParseError::InvalidCommand(command.to_string())),
         }
@@ -162,5 +166,12 @@ mod tests {
             operation,
             Err(ParseError::InvalidValue("value".to_string()))
         );
+    }
+
+    #[test]
+    fn parse_purge() {
+        let test_statement = "PURGE";
+        let operation = Operation::parse(test_statement.to_string());
+        assert_eq!(operation, Ok(Operation::Purge));
     }
 }
