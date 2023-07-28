@@ -4,6 +4,7 @@ pub enum MapError {
     InvalidKey(String),
     EmptyValue(String),
     RestoreError(String),
+    OperationFailure(String),
 }
 
 impl MapError {
@@ -13,6 +14,7 @@ impl MapError {
             MapError::InvalidKey(key) => format!("Invalid key: {}", key),
             MapError::EmptyValue(key) => format!("No value found at: {}", key),
             MapError::RestoreError(error) => format!("Failed to restore db from file: {}", error),
+            MapError::OperationFailure(error) => format!("Database operation failed: {}", error),
         }
     }
 }
