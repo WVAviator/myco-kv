@@ -24,7 +24,7 @@ fn main() {
     let args = Args::parse();
     let port = args.port.unwrap();
     let purge = args.purge;
-    
+
     let system_data_directory = ProjectDirs::from("com", "WVAviator", "MycoKV")
         .expect("Could not access system data directory.");
     let system_data_directory = system_data_directory.data_dir();

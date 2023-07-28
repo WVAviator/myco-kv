@@ -35,10 +35,8 @@ impl Operation {
             Some("DELETE") => {
                 let key = parts.next().ok_or(ParseError::MissingKey)?;
                 Ok(Operation::Delete(key.to_string()))
-            },
-            Some("PURGE") => {
-                Ok(Operation::Purge)
             }
+            Some("PURGE") => Ok(Operation::Purge),
             _ => Err(ParseError::InvalidCommand(command.to_string())),
         }
     }

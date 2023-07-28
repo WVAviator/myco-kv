@@ -48,7 +48,7 @@ impl KVMap {
                         return Err(MapError::RestoreError(error.message()));
                     }
                     Ok(())
-                },
+                }
                 Operation::Purge => Ok(()),
             };
 
@@ -81,7 +81,7 @@ impl KVMap {
         result.map_err(|_| MapError::OperationFailure("Unable to purge data.".to_string()))?;
         Ok(String::from("OK"))
     }
-    
+
     pub fn validate(&self, operation: &Operation) -> Result<(), MapError> {
         match operation {
             Operation::Get(key) => {
@@ -89,7 +89,7 @@ impl KVMap {
                     return Err(MapError::KeyNotFound(key.to_string()));
                 }
                 Ok(())
-            },
+            }
             Operation::Put(key, _value) => {
                 for part in key.split(".") {
                     if part == "*" || part == "_" {
@@ -97,14 +97,14 @@ impl KVMap {
                     }
                 }
                 Ok(())
-            },
+            }
             Operation::Delete(key) => {
                 if let Err(_) = self.radix_tree.get(&key) {
                     return Err(MapError::KeyNotFound(key.to_string()));
                 }
                 Ok(())
-            },
-            Operation::Purge => Ok(())
+            }
+            Operation::Purge => Ok(()),
         }
     }
 
@@ -114,7 +114,6 @@ impl KVMap {
     /// Returns a `MapError` if the key does not exist in the map.
     ///
     pub fn process_operation(&mut self, operation: Operation) -> Result<String, MapError> {
-        
         self.validate(&operation)?;
 
         {

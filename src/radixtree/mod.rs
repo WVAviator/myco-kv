@@ -160,9 +160,9 @@ impl RadixTree {
     }
 
     pub fn purge(&mut self) -> Result<(), RadixError> {
-       self.map = HashMap::new();
-       self.root = RadixNode::new("_".to_string());
-       Ok(())
+        self.map = HashMap::new();
+        self.root = RadixNode::new("_".to_string());
+        Ok(())
     }
 }
 
