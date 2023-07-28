@@ -118,7 +118,6 @@ impl KVMap {
         self.validate(&operation)?;
 
         {
-            // TODO: Validate operation before writing to WAL.
             self.wal
                 .lock()
                 .unwrap()
