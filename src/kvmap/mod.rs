@@ -1,11 +1,8 @@
+use crate::errors::TransactionError;
 use crate::operation::{value::Value, Operation};
 use crate::radixtree::RadixTree;
 use crate::wal::WriteAheadLog;
 use std::sync::{Arc, Mutex};
-
-use self::map_error::MapError;
-
-mod map_error;
 
 pub struct KVMap {
     pub radix_tree: RadixTree,
@@ -20,32 +17,32 @@ impl KVMap {
         }
     }
 
-    pub fn restore(&mut self) -> Result<(), MapError> {
+    pub fn restore(&mut self) -> Result<(), TransactionError> {
         let line_iter = self
             .wal
             .lock()
             .unwrap()
             .read_all_lines()
             .map_err(|error| match error {
-                err => MapError::RestoreError(err.message()),
+                err => TransactionError::RestoreError(err.message()),
             })?;
 
         for line in line_iter {
             let operation = Operation::parse(line.unwrap()).map_err(|error| match error {
-                err => MapError::RestoreError(err.message()),
+                err => TransactionError::RestoreError(err.message()),
             })?;
 
-            let result: Result<(), MapError> = match operation {
+            let result: Result<(), TransactionError> = match operation {
                 Operation::Get(_) => Ok(()),
                 Operation::Put(key, value) => {
                     if let Err(error) = self.put(key, value) {
-                        return Err(MapError::RestoreError(error.message()));
+                        return Err(TransactionError::RestoreError(error.message()));
                     }
                     Ok(())
                 }
                 Operation::Delete(key) => {
                     if let Err(error) = self.delete(&key) {
-                        return Err(MapError::RestoreError(error.message()));
+                        return Err(TransactionError::RestoreError(error.message()));
                     }
                     Ok(())
                 }
@@ -53,54 +50,55 @@ impl KVMap {
             };
 
             result.map_err(|error| match error {
-                err => MapError::RestoreError(err.message()),
+                err => TransactionError::RestoreError(err.message()),
             })?;
         }
 
         Ok(())
     }
 
-    pub fn get(&mut self, key: &str) -> Result<String, MapError> {
+    pub fn get(&mut self, key: &str) -> Result<String, TransactionError> {
         let result = self.radix_tree.get(key);
 
-        result.map_err(|_| MapError::KeyNotFound(key.to_string()))
+        result.map_err(|_| TransactionError::KeyNotFound(key.to_string()))
     }
 
-    pub fn put(&mut self, key: String, value: Value) -> Result<String, MapError> {
+    pub fn put(&mut self, key: String, value: Value) -> Result<String, TransactionError> {
         let result = self.radix_tree.put(key.to_string(), value);
-        result.map_err(|_| MapError::InvalidKey(key))
+        result.map_err(|_| TransactionError::InvalidKey(key))
     }
 
-    pub fn delete(&mut self, key: &str) -> Result<String, MapError> {
+    pub fn delete(&mut self, key: &str) -> Result<String, TransactionError> {
         let result = self.radix_tree.delete(key.to_string());
-        result.map_err(|_| MapError::KeyNotFound(key.to_string()))
+        result.map_err(|_| TransactionError::KeyNotFound(key.to_string()))
     }
 
-    pub fn purge(&mut self) -> Result<String, MapError> {
+    pub fn purge(&mut self) -> Result<String, TransactionError> {
         let result = self.radix_tree.purge();
-        result.map_err(|_| MapError::OperationFailure("Unable to purge data.".to_string()))?;
+        result
+            .map_err(|_| TransactionError::OperationFailure("Unable to purge data.".to_string()))?;
         Ok(String::from("OK"))
     }
 
-    pub fn validate(&self, operation: &Operation) -> Result<(), MapError> {
+    pub fn validate(&self, operation: &Operation) -> Result<(), TransactionError> {
         match operation {
             Operation::Get(key) => {
                 if let Err(_) = self.radix_tree.get(&key) {
-                    return Err(MapError::KeyNotFound(key.to_string()));
+                    return Err(TransactionError::KeyNotFound(key.to_string()));
                 }
                 Ok(())
             }
             Operation::Put(key, _value) => {
                 for part in key.split(".") {
                     if part == "*" || part == "_" {
-                        return Err(MapError::InvalidKey(key.to_string()));
+                        return Err(TransactionError::InvalidKey(key.to_string()));
                     }
                 }
                 Ok(())
             }
             Operation::Delete(key) => {
                 if let Err(_) = self.radix_tree.get(&key) {
-                    return Err(MapError::KeyNotFound(key.to_string()));
+                    return Err(TransactionError::KeyNotFound(key.to_string()));
                 }
                 Ok(())
             }
@@ -111,9 +109,9 @@ impl KVMap {
     /// Process an operation and return a result.
     ///
     /// # Errors
-    /// Returns a `MapError` if the key does not exist in the map.
+    /// Returns a `TransactionError` if the key does not exist in the map.
     ///
-    pub fn process_operation(&mut self, operation: Operation) -> Result<String, MapError> {
+    pub fn process_operation(&mut self, operation: Operation) -> Result<String, TransactionError> {
         self.validate(&operation)?;
 
         {
@@ -161,7 +159,7 @@ mod test {
         assert_eq!(map.delete("key"), Ok("\"value\"".to_string()));
         assert_eq!(
             map.get("key"),
-            Err(MapError::KeyNotFound("key".to_string()))
+            Err(TransactionError::KeyNotFound("key".to_string()))
         );
     }
 
@@ -209,7 +207,7 @@ mod test {
         );
         assert_eq!(
             map.get("key"),
-            Err(MapError::KeyNotFound("key".to_string()))
+            Err(TransactionError::KeyNotFound("key".to_string()))
         );
     }
 
@@ -221,7 +219,7 @@ mod test {
         let operation = super::Operation::Get("key".to_string());
         assert_eq!(
             map.process_operation(operation),
-            Err(super::MapError::KeyNotFound("key".to_string()))
+            Err(super::TransactionError::KeyNotFound("key".to_string()))
         );
     }
 
@@ -233,7 +231,7 @@ mod test {
         let operation = super::Operation::Delete("key".to_string());
         assert_eq!(
             map.process_operation(operation),
-            Err(super::MapError::KeyNotFound("key".to_string()))
+            Err(super::TransactionError::KeyNotFound("key".to_string()))
         );
     }
 
