@@ -2,7 +2,6 @@ use crate::errors::TransactionError;
 
 use self::value::Value;
 
-pub mod parse_error;
 pub mod value;
 
 #[derive(Debug, PartialEq)]
