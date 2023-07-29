@@ -1,14 +1,10 @@
 mod accesstype;
-mod radixerror;
 mod radixnode;
 mod recursive_map;
 
-use crate::operation::value::Value;
+use crate::{errors::TransactionError, operation::value::Value};
 
-use self::{
-    accesstype::AccessType, radixerror::RadixError, radixnode::RadixNode,
-    recursive_map::RecursiveMap,
-};
+use self::{accesstype::AccessType, radixnode::RadixNode, recursive_map::RecursiveMap};
 use std::collections::HashMap;
 
 pub struct RadixTree {
@@ -53,13 +49,13 @@ impl RadixTree {
         RecursiveMap::Map(map)
     }
 
-    pub fn get(&self, key: &str) -> Result<String, RadixError> {
+    pub fn get(&self, key: &str) -> Result<String, TransactionError> {
         let access_type = AccessType::parse(key);
 
         match access_type {
             AccessType::Direct => match self.map.get(key) {
                 Some(value) => Ok(value.to_string()),
-                None => Err(RadixError::KeyNotFound(key.to_string())),
+                None => Err(TransactionError::KeyNotFound(key.to_string())),
             },
             AccessType::FullSubtree(key) => {
                 let mut current = &self.root;
@@ -68,13 +64,13 @@ impl RadixTree {
                     let child = current.children.get(part);
                     match child {
                         Some(child) => current = child,
-                        None => return Err(RadixError::KeyNotFound(key.to_string())),
+                        None => return Err(TransactionError::KeyNotFound(key.to_string())),
                     }
                 }
 
                 self.serialize_subtree(current, 0)
                     .to_string()
-                    .map_err(|_| RadixError::SerializationFailure)
+                    .map_err(|_| TransactionError::SerializationFailure)
             }
             AccessType::PartialSubtree(key, depth) => {
                 let mut current = &self.root;
@@ -83,24 +79,24 @@ impl RadixTree {
                     let child = current.children.get(part);
                     match child {
                         Some(child) => current = child,
-                        None => return Err(RadixError::KeyNotFound(key.to_string())),
+                        None => return Err(TransactionError::KeyNotFound(key.to_string())),
                     }
                 }
 
                 self.serialize_subtree(current, depth)
                     .to_string()
-                    .map_err(|_| RadixError::SerializationFailure)
+                    .map_err(|_| TransactionError::SerializationFailure)
             }
         }
     }
 
-    pub fn put(&mut self, key: String, value: Value) -> Result<String, RadixError> {
+    pub fn put(&mut self, key: String, value: Value) -> Result<String, TransactionError> {
         let mut current = &mut self.root;
         let value_result = value.to_string();
         let parts: Vec<&str> = key.split(".").collect();
         for (i, part) in parts.iter().enumerate() {
             if part.starts_with("*") {
-                return Err(RadixError::InvalidKey(key));
+                return Err(TransactionError::InvalidKey(key));
             }
 
             if current.children.contains_key(*part) {
@@ -120,7 +116,7 @@ impl RadixTree {
         node: &mut RadixNode,
         map: &HashMap<String, Value>,
         parts: &[&str],
-    ) -> Result<bool, RadixError> {
+    ) -> Result<bool, TransactionError> {
         if parts.is_empty() {
             if node.children.is_empty() && !map.contains_key(&node.key) {
                 return Ok(true);
@@ -136,7 +132,7 @@ impl RadixTree {
                 node.children.remove(part);
             }
         } else {
-            return Err(RadixError::KeyNotFound(parts.join(".").to_string()));
+            return Err(TransactionError::KeyNotFound(parts.join(".").to_string()));
         }
 
         if node.children.is_empty() && !map.contains_key(&node.key) {
@@ -146,9 +142,9 @@ impl RadixTree {
         Ok(false)
     }
 
-    pub fn delete(&mut self, key: String) -> Result<String, RadixError> {
+    pub fn delete(&mut self, key: String) -> Result<String, TransactionError> {
         if !self.map.contains_key(&key) {
-            return Err(RadixError::KeyNotFound(key.clone()));
+            return Err(TransactionError::KeyNotFound(key.clone()));
         }
         let value = self.map.remove(&key).unwrap();
 
@@ -159,7 +155,7 @@ impl RadixTree {
         Ok(value.to_string())
     }
 
-    pub fn purge(&mut self) -> Result<(), RadixError> {
+    pub fn purge(&mut self) -> Result<(), TransactionError> {
         self.map = HashMap::new();
         self.root = RadixNode::new("_".to_string());
         Ok(())
@@ -324,7 +320,7 @@ mod test {
 
         assert_eq!(
             radix.delete("a.b".to_string()),
-            Err(RadixError::KeyNotFound("a.b".to_string()))
+            Err(TransactionError::KeyNotFound("a.b".to_string()))
         );
     }
 }
