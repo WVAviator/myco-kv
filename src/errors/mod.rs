@@ -13,6 +13,7 @@ pub enum TransactionError {
     OperationFailure(String),
     InternalError,
     SerializationFailure,
+    MissingCommand,
 }
 
 impl TransactionError {
@@ -69,6 +70,9 @@ impl TransactionError {
             TransactionError::SerializationFailure => {
                 format!("{}: Unable to serialize request into JSON", self.get_code())
             }
+            TransactionError::MissingCommand => {
+                format!("{}: Invalid command", self.get_code())
+            }
         }
     }
 
@@ -87,6 +91,7 @@ impl TransactionError {
             TransactionError::OperationFailure(_) => String::from("E11"),
             TransactionError::InternalError => String::from("E12"),
             TransactionError::SerializationFailure => String::from("E13"),
+            TransactionError::MissingCommand => String::from("E14"),
         }
     }
 }

@@ -1,4 +1,6 @@
-use self::{parse_error::ParseError, value::Value};
+use crate::errors::TransactionError;
+
+use self::value::Value;
 
 pub mod parse_error;
 pub mod value;
@@ -12,20 +14,20 @@ pub enum Operation {
 }
 
 impl Operation {
-    pub fn parse(command: String) -> Result<Self, ParseError> {
+    pub fn parse(command: String) -> Result<Self, TransactionError> {
         let mut parts = command.split_whitespace();
 
         match parts.next() {
             Some("GET") => {
-                let key = parts.next().ok_or(ParseError::MissingKey)?;
+                let key = parts.next().ok_or(TransactionError::MissingKey)?;
                 Ok(Operation::Get(key.to_string()))
             }
             Some("PUT") => {
-                let key = parts.next().ok_or(ParseError::MissingKey)?;
+                let key = parts.next().ok_or(TransactionError::MissingKey)?;
 
                 let value = parts.collect::<Vec<&str>>().join(" ");
                 if value.is_empty() {
-                    return Err(ParseError::MissingValue);
+                    return Err(TransactionError::MissingValue);
                 }
 
                 let value = Value::parse(&value)?;
@@ -33,11 +35,12 @@ impl Operation {
                 Ok(Operation::Put(key.to_string(), value))
             }
             Some("DELETE") => {
-                let key = parts.next().ok_or(ParseError::MissingKey)?;
+                let key = parts.next().ok_or(TransactionError::MissingKey)?;
                 Ok(Operation::Delete(key.to_string()))
             }
             Some("PURGE") => Ok(Operation::Purge),
-            _ => Err(ParseError::InvalidCommand(command.to_string())),
+            Some(other) => Err(TransactionError::UnknownCommand(other.to_string())),
+            None => Err(TransactionError::MissingCommand),
         }
     }
 }
@@ -135,7 +138,7 @@ mod tests {
 
         assert_eq!(
             operation,
-            Err(ParseError::InvalidCommand("INVALID key".to_string()))
+            Err(TransactionError::UnknownCommand("INVALID".to_string()))
         );
     }
 
@@ -144,7 +147,7 @@ mod tests {
         let test_statement = "PUT";
         let operation = Operation::parse(test_statement.to_string());
 
-        assert_eq!(operation, Err(ParseError::MissingKey));
+        assert_eq!(operation, Err(TransactionError::MissingKey));
     }
 
     #[test]
@@ -152,7 +155,7 @@ mod tests {
         let test_statement = "PUT key";
         let operation = Operation::parse(test_statement.to_string());
 
-        assert_eq!(operation, Err(ParseError::MissingValue));
+        assert_eq!(operation, Err(TransactionError::MissingValue));
     }
 
     #[test]
@@ -162,7 +165,7 @@ mod tests {
 
         assert_eq!(
             operation,
-            Err(ParseError::InvalidValue("value".to_string()))
+            Err(TransactionError::InvalidValue("value".to_string()))
         );
     }
 
