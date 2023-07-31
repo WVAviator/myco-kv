@@ -1,5 +1,6 @@
-use super::parse_error::ParseError;
 use serde::{Deserialize, Serialize};
+
+use crate::errors::TransactionError;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(untagged)]
@@ -12,7 +13,7 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn parse(value: &str) -> Result<Self, ParseError> {
+    pub fn parse(value: &str) -> Result<Self, TransactionError> {
         match value {
             "null" => Ok(Value::Null),
             "true" => Ok(Value::Boolean(true)),
@@ -25,7 +26,7 @@ impl Value {
                 } else if value.starts_with('"') && value.ends_with('"') {
                     Ok(Value::String(value[1..value.len() - 1].to_string()))
                 } else {
-                    Err(ParseError::InvalidValue(value.to_string()))
+                    Err(TransactionError::InvalidValue(value.to_string()))
                 }
             }
         }
@@ -80,7 +81,7 @@ mod test {
     fn parses_invalid_value() {
         assert_eq!(
             Value::parse("hello"),
-            Err(ParseError::InvalidValue("hello".to_string()))
+            Err(TransactionError::InvalidValue("hello".to_string()))
         );
     }
 
