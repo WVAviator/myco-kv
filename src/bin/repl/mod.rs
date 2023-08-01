@@ -21,7 +21,7 @@ pub fn start(port: u16) {
 
         match send::send_request(&mut stream, &buffer) {
             Ok(response) => {
-                println!("{}", response);
+                print!("{}", response);
             }
             Err(e) => {
                 eprintln!("Error occurred communicating with server: {}", e);
