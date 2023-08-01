@@ -32,7 +32,7 @@ impl WriteAheadLog {
             Operation::Delete(key) => format!("DELETE {}\n", key),
             Operation::Purge => {
                 self.clear()?;
-                String::from("PURGE")
+                String::from("")
             }
         };
 
