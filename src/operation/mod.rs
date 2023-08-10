@@ -2,8 +2,9 @@ use std::time::SystemTime;
 
 use crate::errors::TransactionError;
 
-use self::value::Value;
+use self::{expiration::Expiration, value::Value};
 
+pub mod expiration;
 pub mod value;
 
 #[derive(Debug, PartialEq)]
@@ -11,7 +12,7 @@ pub enum Operation {
     Get(String),
     Put(String, Value),
     Delete(String),
-    ExpireAt(String, i64),
+    ExpireAt(Expiration),
     Purge,
 }
 
@@ -49,7 +50,10 @@ impl Operation {
                     .parse::<i64>()
                     .map_err(|_| TransactionError::InvalidValue("timestamp".to_string()))?;
 
-                Ok(Operation::ExpireAt(key.to_string(), timestamp))
+                Ok(Operation::ExpireAt(Expiration::new(
+                    key.to_string(),
+                    timestamp,
+                )))
             }
             Some("EXPIRE") => {
                 let key = parts.next().ok_or(TransactionError::MissingKey)?;
@@ -58,15 +62,16 @@ impl Operation {
                     .ok_or(TransactionError::MissingValue)?
                     .parse::<i64>()
                     .map_err(|_| TransactionError::InvalidValue("duration".to_string()))?;
+                let timestamp = SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as i64
+                    + duration;
 
-                Ok(Operation::ExpireAt(
+                Ok(Operation::ExpireAt(Expiration::new(
                     key.to_string(),
-                    SystemTime::now()
-                        .duration_since(SystemTime::UNIX_EPOCH)
-                        .unwrap()
-                        .as_secs() as i64
-                        + duration,
-                ))
+                    timestamp,
+                )))
             }
             Some(other) => Err(TransactionError::UnknownCommand(other.to_string())),
             None => Err(TransactionError::MissingCommand),
@@ -211,7 +216,10 @@ mod tests {
         let operation = Operation::parse(test_statement.to_string());
         assert_eq!(
             operation,
-            Ok(Operation::ExpireAt("key".to_string(), 1234567890))
+            Ok(Operation::ExpireAt(Expiration::new(
+                "key".to_string(),
+                1234567890
+            ))),
         );
     }
 
@@ -221,14 +229,14 @@ mod tests {
         let operation = Operation::parse(test_statement.to_string());
         assert_eq!(
             operation,
-            Ok(Operation::ExpireAt(
+            Ok(Operation::ExpireAt(Expiration::new(
                 "key".to_string(),
                 SystemTime::now()
                     .duration_since(SystemTime::UNIX_EPOCH)
                     .unwrap()
                     .as_secs() as i64
                     + 100
-            ))
+            ))),
         );
     }
 }

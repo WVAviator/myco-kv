@@ -46,7 +46,7 @@ impl KVMap {
                     }
                     Ok(())
                 }
-                Operation::ExpireAt(key, timestamp) => Ok(()),
+                Operation::ExpireAt(_expiration) => Ok(()),
                 Operation::Purge => Ok(()),
             };
 
@@ -103,7 +103,7 @@ impl KVMap {
                 }
                 Ok(())
             }
-            Operation::ExpireAt(_key, _timestamp) => Ok(()),
+            Operation::ExpireAt(_expiration) => Ok(()),
             Operation::Purge => Ok(()),
         }
     }
@@ -128,7 +128,7 @@ impl KVMap {
             Operation::Get(key) => self.get(&key),
             Operation::Put(key, value) => self.put(key.to_string(), value),
             Operation::Delete(key) => self.delete(&key),
-            Operation::ExpireAt(_key, _timestamp) => Ok(String::from("OK")),
+            Operation::ExpireAt(_expiration) => Ok(String::from("OK")),
             Operation::Purge => self.purge(),
         }
     }
