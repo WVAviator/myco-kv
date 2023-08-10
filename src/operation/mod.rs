@@ -65,7 +65,7 @@ impl Operation {
                 let timestamp = SystemTime::now()
                     .duration_since(SystemTime::UNIX_EPOCH)
                     .unwrap()
-                    .as_secs() as i64
+                    .as_millis() as i64
                     + duration;
 
                 Ok(Operation::ExpireAt(Expiration::new(

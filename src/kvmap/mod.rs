@@ -1,12 +1,16 @@
 use crate::errors::TransactionError;
+use crate::operation::expiration::Expiration;
 use crate::operation::{value::Value, Operation};
 use crate::radixtree::RadixTree;
 use crate::wal::WriteAheadLog;
+use std::collections::BinaryHeap;
 use std::sync::{Arc, Mutex};
+use std::time::SystemTime;
 
 pub struct KVMap {
-    pub radix_tree: RadixTree,
-    pub wal: Arc<Mutex<WriteAheadLog>>,
+    radix_tree: RadixTree,
+    wal: Arc<Mutex<WriteAheadLog>>,
+    exp_heap: BinaryHeap<Expiration>,
 }
 
 impl KVMap {
@@ -14,6 +18,7 @@ impl KVMap {
         KVMap {
             radix_tree: RadixTree::new(),
             wal,
+            exp_heap: BinaryHeap::new(),
         }
     }
 
@@ -46,7 +51,12 @@ impl KVMap {
                     }
                     Ok(())
                 }
-                Operation::ExpireAt(_expiration) => Ok(()),
+                Operation::ExpireAt(expiration) => {
+                    if let Err(error) = self.expire_at(expiration) {
+                        return Err(TransactionError::RestoreError(error.message()));
+                    }
+                    Ok(())
+                }
                 Operation::Purge => Ok(()),
             };
 
@@ -81,6 +91,34 @@ impl KVMap {
         Ok(String::from("OK"))
     }
 
+    pub fn expire_at(&mut self, expiration: Expiration) -> Result<String, TransactionError> {
+        let result = self.radix_tree.get(&expiration.key);
+        result.map_err(|_| TransactionError::KeyNotFound(expiration.key.clone()))?;
+
+        self.exp_heap.push(expiration);
+
+        Ok(String::from("OK"))
+    }
+
+    pub fn process_expirations(&mut self) -> Result<(), TransactionError> {
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as i64;
+
+        while let Some(expiration) = self.exp_heap.peek() {
+            if expiration.timestamp > now {
+                break;
+            }
+
+            let key = expiration.key.clone();
+            self.delete(&key)?;
+            self.exp_heap.pop();
+        }
+
+        Ok(())
+    }
+
     pub fn validate(&self, operation: &Operation) -> Result<(), TransactionError> {
         match operation {
             Operation::Get(key) => {
@@ -103,7 +141,18 @@ impl KVMap {
                 }
                 Ok(())
             }
-            Operation::ExpireAt(_expiration) => Ok(()),
+            Operation::ExpireAt(expiration) => {
+                if expiration.timestamp
+                    <= SystemTime::now()
+                        .duration_since(SystemTime::UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs() as i64
+                {
+                    return Err(TransactionError::InvalidExpiration(expiration.timestamp));
+                }
+
+                Ok(())
+            }
             Operation::Purge => Ok(()),
         }
     }
@@ -114,6 +163,7 @@ impl KVMap {
     /// Returns a `TransactionError` if the key does not exist in the map.
     ///
     pub fn process_operation(&mut self, operation: Operation) -> Result<String, TransactionError> {
+        self.process_expirations()?;
         self.validate(&operation)?;
 
         {
@@ -128,7 +178,7 @@ impl KVMap {
             Operation::Get(key) => self.get(&key),
             Operation::Put(key, value) => self.put(key.to_string(), value),
             Operation::Delete(key) => self.delete(&key),
-            Operation::ExpireAt(_expiration) => Ok(String::from("OK")),
+            Operation::ExpireAt(expiration) => self.expire_at(expiration),
             Operation::Purge => self.purge(),
         }
     }

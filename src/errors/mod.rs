@@ -14,6 +14,7 @@ pub enum TransactionError {
     InternalError,
     SerializationFailure,
     MissingCommand,
+    InvalidExpiration(i64),
 }
 
 impl TransactionError {
@@ -73,6 +74,13 @@ impl TransactionError {
             TransactionError::MissingCommand => {
                 format!("{}: Invalid command", self.get_code())
             }
+            TransactionError::InvalidExpiration(timestamp) => {
+                format!(
+                    "{}: Invalid expiration {}",
+                    self.get_code(),
+                    timestamp.to_string()
+                )
+            }
         }
     }
 
@@ -92,6 +100,7 @@ impl TransactionError {
             TransactionError::InternalError => String::from("E12"),
             TransactionError::SerializationFailure => String::from("E13"),
             TransactionError::MissingCommand => String::from("E14"),
+            TransactionError::InvalidExpiration(_) => String::from("E15"),
         }
     }
 }
