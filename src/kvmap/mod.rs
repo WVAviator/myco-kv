@@ -3,6 +3,7 @@ use crate::operation::expiration::Expiration;
 use crate::operation::{value::Value, Operation};
 use crate::radixtree::RadixTree;
 use crate::wal::WriteAheadLog;
+use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
@@ -57,6 +58,7 @@ impl KVMap {
                     }
                     Ok(())
                 }
+                Operation::Time => Ok(()),
                 Operation::Purge => Ok(()),
             };
 
@@ -153,6 +155,7 @@ impl KVMap {
 
                 Ok(())
             }
+            Operation::Time => Ok(()),
             Operation::Purge => Ok(()),
         }
     }
@@ -179,6 +182,11 @@ impl KVMap {
             Operation::Put(key, value) => self.put(key.to_string(), value),
             Operation::Delete(key) => self.delete(&key),
             Operation::ExpireAt(expiration) => self.expire_at(expiration),
+            Operation::Time => Ok(SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_millis()
+                .to_string()),
             Operation::Purge => self.purge(),
         }
     }

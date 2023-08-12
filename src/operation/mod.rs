@@ -13,6 +13,7 @@ pub enum Operation {
     Put(String, Value),
     Delete(String),
     ExpireAt(Expiration),
+    Time,
     Purge,
 }
 
@@ -50,10 +51,10 @@ impl Operation {
                     .parse::<i64>()
                     .map_err(|_| TransactionError::InvalidValue("timestamp".to_string()))?;
 
-                Ok(Operation::ExpireAt(Expiration::new(
+                return Ok(Operation::ExpireAt(Expiration::new(
                     key.to_string(),
                     timestamp,
-                )))
+                )));
             }
             Some("EXPIRE") => {
                 let key = parts.next().ok_or(TransactionError::MissingKey)?;
@@ -73,6 +74,7 @@ impl Operation {
                     timestamp,
                 )))
             }
+            Some("TIME") => Ok(Operation::Time),
             Some(other) => Err(TransactionError::UnknownCommand(other.to_string())),
             None => Err(TransactionError::MissingCommand),
         }
