@@ -1,6 +1,6 @@
 use clap::Parser;
 use directories::ProjectDirs;
-use myco_kv::{kvmap::KVMap, wal::WriteAheadLog};
+use myco_kv::{kvmap::KVMap, wal::WriteAheadLog, worker::Worker};
 use std::{
     fs,
     sync::{Arc, Mutex},
@@ -50,6 +50,14 @@ fn main() {
 
     let kvmap = Arc::new(Mutex::new(kvmap));
 
+    let worker_kvmap = Arc::clone(&kvmap);
+    let expiration_worker = move || {
+        let mut kvmap = worker_kvmap.lock().unwrap();
+        kvmap.process_expirations().unwrap_or(());
+    };
+    let expiration_worker = Worker::new(5000, expiration_worker);
+    let expiration_worker_thread = expiration_worker.start();
+
     let server_kvmap = Arc::clone(&kvmap);
     let server_thread = thread::spawn(move || {
         server::start(port, server_kvmap);
@@ -58,4 +66,5 @@ fn main() {
 
     server_thread.join().unwrap();
     repl_thread.join().unwrap();
+    expiration_worker_thread.join().unwrap();
 }
