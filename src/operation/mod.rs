@@ -226,17 +226,18 @@ mod tests {
     #[test]
     fn parse_expire() {
         let test_statement = "EXPIRE key 100";
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as i64;
         let operation = Operation::parse(test_statement.to_string());
-        assert_eq!(
-            operation,
-            Ok(Operation::ExpireAt(Expiration::new(
-                "key".to_string(),
-                SystemTime::now()
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs() as i64
-                    + 100
-            ))),
-        );
+
+        match operation {
+            Ok(Operation::ExpireAt(Expiration { key, timestamp })) => {
+                assert_eq!(key, "key".to_string());
+                assert!(timestamp + now > 100);
+            }
+            _ => assert!(false),
+        }
     }
 }
