@@ -1,17 +1,16 @@
+use crate::atomicheap::AtomicHeap;
 use crate::errors::TransactionError;
 use crate::operation::expiration::Expiration;
 use crate::operation::{value::Value, Operation};
 use crate::radixtree::RadixTree;
 use crate::wal::WriteAheadLog;
-use std::cmp::Reverse;
-use std::collections::BinaryHeap;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
 pub struct KVMap {
     radix_tree: RadixTree,
     wal: Arc<Mutex<WriteAheadLog>>,
-    exp_heap: BinaryHeap<Expiration>,
+    exp_heap: AtomicHeap<Expiration>,
 }
 
 impl KVMap {
@@ -19,7 +18,7 @@ impl KVMap {
         KVMap {
             radix_tree: RadixTree::new(),
             wal,
-            exp_heap: BinaryHeap::new(),
+            exp_heap: AtomicHeap::new(),
         }
     }
 
@@ -97,7 +96,7 @@ impl KVMap {
         let result = self.radix_tree.get(&expiration.key);
         result.map_err(|_| TransactionError::KeyNotFound(expiration.key.clone()))?;
 
-        self.exp_heap.push(expiration);
+        self.exp_heap.push(expiration.key.clone(), expiration);
 
         Ok(String::from("OK"))
     }

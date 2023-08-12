@@ -1,3 +1,4 @@
+pub mod atomicheap;
 pub mod errors;
 pub mod kvmap;
 pub mod operation;
