@@ -115,6 +115,19 @@ where
 
         None
     }
+
+    pub fn invalidate(&mut self, key: &str) {
+        if let Some(heap_data) = self.map.get(key) {
+            *heap_data.valid.lock().unwrap() = false;
+        }
+
+        self.map.remove(key);
+    }
+
+    pub fn clear(&mut self) {
+        self.heap.clear();
+        self.map.clear();
+    }
 }
 
 #[cfg(test)]

@@ -81,6 +81,7 @@ impl KVMap {
     }
 
     pub fn delete(&mut self, key: &str) -> Result<String, TransactionError> {
+        self.exp_heap.invalidate(&key);
         let result = self.radix_tree.delete(key.to_string());
         result.map_err(|_| TransactionError::KeyNotFound(key.to_string()))
     }
@@ -89,6 +90,7 @@ impl KVMap {
         let result = self.radix_tree.purge();
         result
             .map_err(|_| TransactionError::OperationFailure("Unable to purge data.".to_string()))?;
+        self.exp_heap.clear();
         Ok(String::from("OK"))
     }
 
