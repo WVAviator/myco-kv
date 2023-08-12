@@ -25,7 +25,7 @@ In the future, drivers and SDKs for MycoKV will be developed in many popular lan
 
 ### Basic Usage
 
-At its current stage of development, MycoKV currently supports three commands, `GET`, `PUT`, and `DELETE`. You can store floats, integers, strings, booleans, and even null as values.
+At its current stage of development, MycoKV currently supports three basic commands, `GET`, `PUT`, and `DELETE`. You can store floats, integers, strings, booleans, and even null as values.
 Example usage:
 
 ```
@@ -40,6 +40,38 @@ When sending `GET mykey`, the resulting value is returned as a plain string:
 > GET mykey
 value
 ```
+
+### Expiring Keys
+
+MycoKV supports expiring keys after a certain amount of time. This can be done by using the `EXPIRE` or `EXPIREAT` commands. `EXPIREAT` takes a UNIX timestamp as an argument, while `EXPIRE` takes a number of milliseconds as an argument.
+Example usage:
+
+```
+> PUT mykey "my value"
+"my value"
+> EXPIRE mykey 1000
+OK
+```
+
+After only half a second has passed, you will still be able to get the key's value:
+
+```
+> GET mykey
+"my value"
+```
+
+After one second has passed, the key will no longer exist:
+
+```
+> GET mykey
+E09: Key mykey not found
+```
+
+MycoKV manages key expirations internally by periodically removing expired keys and by ensuring all expired keys are removed before executing any operations such as `GET` or `DELETE`.
+
+If an expiration already exists for the key, calling `EXPIRE` or `EXPIREAT` again will overwrite the previous expiration.
+
+If the key is deleted using the `DELETE` command, any existing expiration will be removed.
 
 ### Purging Data
 
