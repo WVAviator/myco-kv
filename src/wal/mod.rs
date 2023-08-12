@@ -34,6 +34,10 @@ impl WriteAheadLog {
                 self.clear()?;
                 String::from("")
             }
+            Operation::Time => return Ok(()),
+            Operation::ExpireAt(expiration) => {
+                format!("EXPIREAT {} {}\n", expiration.key, expiration.timestamp)
+            }
         };
 
         self.file

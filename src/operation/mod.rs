@@ -1,7 +1,10 @@
+use std::time::SystemTime;
+
 use crate::errors::TransactionError;
 
-use self::value::Value;
+use self::{expiration::Expiration, value::Value};
 
+pub mod expiration;
 pub mod value;
 
 #[derive(Debug, PartialEq)]
@@ -9,6 +12,8 @@ pub enum Operation {
     Get(String),
     Put(String, Value),
     Delete(String),
+    ExpireAt(Expiration),
+    Time,
     Purge,
 }
 
@@ -38,6 +43,38 @@ impl Operation {
                 Ok(Operation::Delete(key.to_string()))
             }
             Some("PURGE") => Ok(Operation::Purge),
+            Some("EXPIREAT") => {
+                let key = parts.next().ok_or(TransactionError::MissingKey)?;
+                let timestamp = parts
+                    .next()
+                    .ok_or(TransactionError::MissingValue)?
+                    .parse::<i64>()
+                    .map_err(|_| TransactionError::InvalidValue("timestamp".to_string()))?;
+
+                return Ok(Operation::ExpireAt(Expiration::new(
+                    key.to_string(),
+                    timestamp,
+                )));
+            }
+            Some("EXPIRE") => {
+                let key = parts.next().ok_or(TransactionError::MissingKey)?;
+                let duration = parts
+                    .next()
+                    .ok_or(TransactionError::MissingValue)?
+                    .parse::<i64>()
+                    .map_err(|_| TransactionError::InvalidValue("duration".to_string()))?;
+                let timestamp = SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as i64
+                    + duration;
+
+                Ok(Operation::ExpireAt(Expiration::new(
+                    key.to_string(),
+                    timestamp,
+                )))
+            }
+            Some("TIME") => Ok(Operation::Time),
             Some(other) => Err(TransactionError::UnknownCommand(other.to_string())),
             None => Err(TransactionError::MissingCommand),
         }
@@ -46,6 +83,7 @@ impl Operation {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
@@ -173,5 +211,36 @@ mod tests {
         let test_statement = "PURGE";
         let operation = Operation::parse(test_statement.to_string());
         assert_eq!(operation, Ok(Operation::Purge));
+    }
+
+    #[test]
+    fn parse_expireat() {
+        let test_statement = "EXPIREAT key 1234567890";
+        let operation = Operation::parse(test_statement.to_string());
+        assert_eq!(
+            operation,
+            Ok(Operation::ExpireAt(Expiration::new(
+                "key".to_string(),
+                1234567890
+            ))),
+        );
+    }
+
+    #[test]
+    fn parse_expire() {
+        let test_statement = "EXPIRE key 100";
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as i64;
+        let operation = Operation::parse(test_statement.to_string());
+
+        match operation {
+            Ok(Operation::ExpireAt(Expiration { key, timestamp })) => {
+                assert_eq!(key, "key".to_string());
+                assert!(timestamp + now > 100);
+            }
+            _ => assert!(false),
+        }
     }
 }
