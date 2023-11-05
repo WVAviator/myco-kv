@@ -4,12 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-assert-json-diff = "2.0.2"
 clap = { version = "4.3.5", features = ["derive"] }
 directories = "5.0.1"
-mockall = "0.11.4"
 serde = { version = "1.0.164", features = ["derive"] }
 serde_json = "1.0.99"
+
+[dev-dependencies]
+assert-json-diff = "2.0.2"
+mockall = "0.11.4"
 
 [[bin]]
 name = "myco-kv"
