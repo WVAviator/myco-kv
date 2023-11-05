@@ -3,8 +3,6 @@ name = "myco-kv"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 assert-json-diff = "2.0.2"
 clap = { version = "4.3.5", features = ["derive"] }
@@ -12,3 +10,7 @@ directories = "5.0.1"
 mockall = "0.11.4"
 serde = { version = "1.0.164", features = ["derive"] }
 serde_json = "1.0.99"
+
+[[bin]]
+name = "myco-kv"
+path = "src/bin/main.rs"
