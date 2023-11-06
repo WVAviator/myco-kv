@@ -2,13 +2,23 @@
 
 MycoKV is a lightweight, fast, and persistent hierarchical key-value store built in Rust.
 
-## Getting Started
+## Installation
 
-MycoKV is still in active development without a release, however if you would like to demo the application, you can follow the steps below.
+Note: MycoKV is not currently available for Windows operating systems.
 
-1. Install Rust from [the official website](https://www.rust-lang.org/tools/install)
-2. Clone this repository to your local machine to create the project directory
-3. Run the command `cargo run` from within the directory
+To install MycoKV for MacOS or Linux, navigate to the [releases page](https://github.com/WVAviator/myco-kv/releases/latest) and download the latest release for your operating system.
+
+For MacOS, if you have an M1/M2 chip, you will need to download the `darwin-arm64` release. Otherwise, download the `darwin-amd64` release.
+
+For Linux, download the `linux-amd64` release.
+
+Once downloaded, extract the archive and run the `myco-kv` executable. If you wish to run MycoKV from anywhere on your machine, you can move the executable to a directory in your `$PATH` such as `/usr/local/bin`.
+
+#### Coming Soon
+
+- Installation via package managers such as Homebrew and APT.
+- Running MycoKV as a Docker container.
+- Windows support.
 
 ## Using MycoKV
 
@@ -123,7 +133,7 @@ The result of sending the above GET request would be the following JSON object c
 }
 ```
 
-Note that if the parent key has a value set as well, for example by calling `PUT kitchen "tuscan"`, that value will appear as the key "\_" in the reulting JSON object:
+Note that if the parent key has a value set as well, for example by calling `PUT kitchen "tuscan"`, that value will appear as the key "\_" in the resulting JSON object:
 
 ```json
 {

@@ -14,5 +14,5 @@ assert-json-diff = "2.0.2"
 mockall = "0.11.4"
 
 [[bin]]
-name = "myco-kv"
+name = "mycokv"
 path = "src/bin/main.rs"
