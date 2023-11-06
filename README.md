@@ -27,8 +27,8 @@ MycoKV is configured to run with the built-in REPL that opens upon starting the 
 By default, MycoKV runs on port 6922, however this can be changed by flag when starting the server, using either of the following commands:
 
 ```bash
-cargo run -- --port 1234
-cargo run -- -p 1234
+mycokv --port 1234
+mycokv -p 1234
 ```
 
 In the future, drivers and SDKs for MycoKV will be developed in many popular languages and frameworks, including Java, Node.js, and Python.
