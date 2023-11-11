@@ -11,19 +11,19 @@ Running MycoKV via Docker conatiner is the recommended way to install and run My
 To quickly start up a MycoKV server, run the following command:
 
 ```bash
-docker run -d -p 6922:6922 wvaviator/myco-kv
+docker run -d -p 6922:6922 wvaviator/mycokv
 ```
 
 This command will start the server in detached mode. If you would instead like to access the REPL and run commands against the database, you can run the following command (replacing `-d` with `-it`):
 
 ```bash
-docker run -it -p 6922:6922 wvaviator/myco-kv
+docker run -it -p 6922:6922 wvaviator/mycokv
 ```
 
 If you would like to persist data between server start/stop, you can mount a volume to the container:
 
 ```bash
-docker run -d -p 6922:6922 -v mycokv-data:/root/.local/share/mycokv wvaviator/myco-kv
+docker run -d -p 6922:6922 -v mycokv-data:/root/.local/share/mycokv wvaviator/mycokv
 ```
 
 In a more complex configuration where you might have several containers running, you might instead want to use Docker Compose to manage your containers. An example `docker-compose.yml` file might look like this:
@@ -32,7 +32,7 @@ In a more complex configuration where you might have several containers running,
 version: '3.9'
 services:
   myco-kv:
-    image: wvaviator/myco-kv
+    image: wvaviator/mycokv
     ports:
       - '1234:6922' # Custom port mapping
     volumes:
