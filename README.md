@@ -51,7 +51,7 @@ For MacOS, if you have an M1/M2 chip, you will need to download the `darwin-arm6
 
 For Linux, download the `linux-amd64` release.
 
-Once downloaded, extract the archive and run the `myco-kv` executable. If you wish to run MycoKV from anywhere on your machine, you can move the executable to a directory in your `$PATH` such as `/usr/local/bin`.
+Once downloaded, extract the archive and run the `mycokv` executable. If you wish to run MycoKV from anywhere on your machine, you can move the executable to a directory in your `$PATH` such as `/usr/local/bin`.
 
 ### Coming Soon
 
